@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import DataBaseConnect from './utils/dbConnect.js'; 
+import userRouter from './routes/user.router.js';
+import ErrorHandler from './utils/globalErrorHandler.js';
 
 const app = express();
 //------------------------ Middlewares
@@ -28,10 +30,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 //---------------- Routes-Router would go here
+app.use("/api/user", userRouter);
+
+
+
 
 
 
 //----------------
+app.use(ErrorHandler)
 let port = process.env.PORT || 8000;
 let host = process.env.HOST || "localhost";
 
