@@ -5,6 +5,9 @@ import employeeModel from "../model/employee.model.js";
 import bcrypt from "bcrypt";
 import sendToken_Cookie from "../utils/JWT-Cookies.js";
 import sendEmail from "../utils/email.js";
+import {sendResetEmail} from "../utils/resetPassEmail.js";
+import getResetToken from "../utils/resetPassToken.js";
+import CryptoJS from "crypto-js";
 
 let registerUser = async (req, res,next) => {
  
@@ -252,5 +255,99 @@ let logOutUser = async (req, res,next) => {
     }
 };
 
+let changeUserPassword = async (req, res,next) => {
 
-export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser};
+    try {
+
+        let { email, oldPassword, newPassword  } = req.body;
+        let user = await userModel.findOne({ email: email });
+        if (!user) {
+            let error = new Error("User not found");
+            error.status = 404;
+            return next(error);
+        }
+        let isPasswordValid = await bcrypt.compare(oldPassword, user.passwordHash);
+        if (!isPasswordValid) {
+            let error = new Error("wronge old password");
+            error.status = 400;
+            return next(error);
+        }
+        let hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.passwordHash = hashedNewPassword;
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully",
+        });
+        
+    } catch (error) {
+        next(error);
+    }
+
+};
+
+let forgotPassword = async (req, res,next) => {
+    try {
+        
+        let { email } = req.body;
+        let user = await userModel.findOne({ email: email });
+        if (!user) {
+            let error = new Error("User not found");
+            error.status = 404;
+            return next(error);
+        }
+        let { RawToken, hashToken } = getResetToken();
+        user.resetPasswordToken = hashToken;
+        user.resetPasswordExpiryDate = Date.now() + 1000 * 60 * 10; // 10 minute from now
+        await user.save();
+        let resetUrl = `${process.env.FRONTEND_URL}/reset-password/${RawToken}`;
+        // let mailOptions = {
+        //     to: user.email,
+        //     subject: "CityCare - Password Reset",
+        //     name : user.email,
+        //     resetUrl : resetUrl,
+        // }
+        //  await sendResetEmail(mailOptions); 
+         console.log("Raw Token: ",RawToken);
+         
+         res.status(200).json({
+            success: true,
+            message: `Email for reset password sent to ${user.email} successfully`,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+let resetUserPassword = async (req, res,next) => {
+    try {
+         let token = req.params.token;
+         let { newPassword } = req.body;
+         
+         let hashToken = CryptoJS.SHA256(token).toString(CryptoJS.enc.Hex);
+         let user = await userModel.findOne({
+            resetPasswordToken: hashToken,
+            resetPasswordExpiryDate: { $gt: Date.now() },
+         });
+         if(!user){
+            let error = new Error("Invalid or expired password reset token");
+            error.status = 400;
+            return next(error);
+         }
+         let hashedNewPassword = await bcrypt.hash(newPassword, 10);
+         user.passwordHash = hashedNewPassword;
+         user.resetPasswordToken = null;
+         user.resetPasswordExpiryDate = null;
+         await user.save();
+         res.status(200).json({
+            success: true,
+            message: "Password reset successfully",
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser, changeUserPassword,forgotPassword, resetUserPassword};
