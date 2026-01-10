@@ -1,0 +1,1 @@
+import complainantModel from "../model/complainant.model";

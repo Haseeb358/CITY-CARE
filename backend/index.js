@@ -6,6 +6,9 @@ import cookieParser from "cookie-parser";
 import DataBaseConnect from './utils/dbConnect.js'; 
 import userRouter from './routes/user.router.js';
 import ErrorHandler from './utils/globalErrorHandler.js';
+import adminRouter from './routes/admin.router.js';
+import complainantRouter from './routes/complainant.router.js';
+import cityManagerRouter from './routes/cityManager.router.js';
 
 const app = express();
 //------------------------ Middlewares
@@ -31,6 +34,9 @@ app.use(cors(corsOptions));
 
 //---------------- Routes-Router would go here
 app.use("/api/user", userRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/complainant", complainantRouter);
+app.use("/api/city-manager", cityManagerRouter);
 
 
 
