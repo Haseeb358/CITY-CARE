@@ -8,6 +8,7 @@ import sendEmail from "../utils/email.js";
 import {sendResetEmail} from "../utils/resetPassEmail.js";
 import getResetToken from "../utils/resetPassToken.js";
 import CryptoJS from "crypto-js";
+import cityModel from "../model/city.model.js";
 
 let registerUser = async (req, res,next) => {
  
@@ -170,9 +171,14 @@ let createEmployeeRecord = async (req, res,next) => {
       error.status = 400;
       return next(error);
     }
-
+    let cityRecord = await cityModel.findOne({ name: city });
+    if (!cityRecord) {
+      let error = new Error("City not found");
+      error.status = 400;
+      return next(error);
+    }
     let newEmployee = new employeeModel({
-        fullName,city,role,zone,skills,address,contactNumber,CNIC,joinedDate,DOB,education,
+        fullName,city:cityRecord._id,role,zone,skills,address,contactNumber,CNIC,joinedDate,DOB,education,
 
     })
     let savedEmployee = await newEmployee.save();
