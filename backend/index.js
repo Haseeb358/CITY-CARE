@@ -9,7 +9,7 @@ import ErrorHandler from './utils/globalErrorHandler.js';
 import adminRouter from './routes/admin.router.js';
 import complainantRouter from './routes/complainant.router.js';
 import cityManagerRouter from './routes/cityManager.router.js';
-
+import paymentRouter from './routes/payment.router.js';
 const app = express();
 //------------------------ Middlewares
 dotenv.config();
@@ -37,7 +37,7 @@ app.use("/api/user", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/complainant", complainantRouter);
 app.use("/api/city-manager", cityManagerRouter);
-
+app.use('/api/payment', paymentRouter)
 
 
 

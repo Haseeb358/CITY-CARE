@@ -1,15 +1,33 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { createBrowserRouter, RouterProvider} from 'react-router-dom'
 import './App.css'
-
+import PaymentPage from './components/Payment/PaymentPage.jsx'
+import PaymentSuccess from './components/Payment/PaymentSuccess.jsx'
+import PaymentFailure from './components/Payment/PaymentFailure.jsx'
 function App() {
-  const [count, setCount] = useState(0)
+  const router = createBrowserRouter([
+  {
+    path: "/payment",
+    children: [
+      {
+        index: true,
+        element: <PaymentPage />
+      },
+      {
+        path: "success",
+        element: <PaymentSuccess />
+      },
+      {
+        path: "failure",
+        element: <PaymentFailure />
+      }
+    ]
+  }
+]);
+
 
   return (
-    <>
-      <div></div>
-    </>
+    <RouterProvider router={router} />
   )
 }
 
