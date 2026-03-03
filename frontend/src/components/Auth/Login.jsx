@@ -25,7 +25,7 @@ const Login = () => {
             />
 
             <button className="text-red-500 text-left cursor-pointer">
-              Forgot Password
+              <a href="/forget-password">Forgot Password</a>
             </button>
 
             <button

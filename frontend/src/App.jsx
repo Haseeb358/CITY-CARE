@@ -6,11 +6,21 @@ import PaymentSuccess from "./components/Payment/PaymentSuccess.jsx";
 import PaymentFailure from "./components/Payment/PaymentFailure.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
+import ForgetPasswordPage from "./pages/ForgetPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 function App() {
   const router = createBrowserRouter([
     {
       path: "/",
       element: <LoginPage />,
+    },
+    {
+      path: "/forget-password",
+      element: <ForgetPasswordPage />,
+    },
+    {
+      path: "/reset-password/:token",
+      element: <ResetPasswordPage />,
     },
     {
       path: "/signup",
