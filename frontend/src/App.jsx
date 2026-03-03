@@ -5,11 +5,16 @@ import PaymentPage from "./components/Payment/PaymentPage.jsx";
 import PaymentSuccess from "./components/Payment/PaymentSuccess.jsx";
 import PaymentFailure from "./components/Payment/PaymentFailure.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import SignupPage from "./pages/SignupPage.jsx";
 function App() {
   const router = createBrowserRouter([
     {
       path: "/",
       element: <LoginPage />,
+    },
+    {
+      path: "/signup",
+      element: <SignupPage />,
     },
     {
       path: "/payment",

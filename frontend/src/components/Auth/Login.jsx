@@ -4,21 +4,23 @@ const Login = () => {
       {/* Left side */}
       <div className="w-1/2 flex items-center justify-center">
         <div className="w-full max-w-md p-8 border-2 rounded-2xl">
-          <h1 className="text-4xl font-bold mb-6">Login</h1>
+          <h1 className="text-4xl font-bold mb-6 text-gray-950">Login</h1>
           <form className="flex flex-col gap-4 mb-5">
-            <label htmlFor="email">Email</label>
+            <label className="text-sm font-medium text-gray-700" htmlFor="email">Email</label>
             <input
               required
               id="email"
               type="email"
               className="w-full p-2 border rounded-sm"
+              placeholder="john@example.com"
             />
 
-            <label htmlFor="password">Password</label>
+            <label className="text-sm font-medium text-gray-700" htmlFor="password">Password</label>
             <input
               required
               id="password"
               type="password"
+              placeholder="••••••••"
               className="w-full p-2 border rounded-sm"
             />
 
@@ -35,7 +37,7 @@ const Login = () => {
           </form>
           <span>
             Don't have an account?{" "}
-            <a className="text-red-500 cursor-pointer">Sign up</a>
+            <a className="text-red-500 cursor-pointer" href="/signup">Sign up</a>
           </span>
         </div>
       </div>
