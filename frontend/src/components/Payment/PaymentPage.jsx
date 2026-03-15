@@ -28,7 +28,7 @@ const PaymentPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
+        <h2 className="text-xl sm:text-3xl font-bold text-center text-gray-800 mb-2">
           Support CityCare
         </h2>
         <p className="text-center text-gray-500 mb-6">

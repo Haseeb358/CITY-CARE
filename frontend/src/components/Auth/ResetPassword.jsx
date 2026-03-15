@@ -19,20 +19,21 @@ const ResetPassword = () => {
   };
 
   return (
-    <main className="h-[calc(100vh-160px)] p-18 gap-8 bg-gray-50 overflow-hidden flex justify-around">
+    <main className="p-6 lg:p-18 gap-8 bg-gray-50 overflow-hidden flex justify-around">
       {/* Left-side */}
-      <div className="flex flex-col p-16 pb-0 gap-6 bg-gray-100">
-        <h1 className="text-4xl font-bold">Set a Password</h1>
+      <div className="flex flex-col p-4 md:p-16 pb-0 gap-6 bg-gray-100">
+        <h1 className="text-3xl sm:text-4xl font-bold">Set a Password</h1>
         <p>
-          Please set a new password for your account. Make sure to choose a strong password.
+          Please set a new password for your account. Make sure to choose a
+          strong password.
         </p>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col justify-center gap-2 w-[60%]"
+          className="flex flex-col justify-center gap-2 w-full sm:w-[60%]"
         >
           <input
-            className="p-1 w-full px-4 py-3 border border-gray-200 rounded-lg
+            className="p-1 w-full px-4 py-3 bg-gray-200 border border-gray-200 rounded-lg
                        focus:ring-2 focus:ring-blue-200 focus:border-blue-400
                        outline-none transition"
             type="password"
@@ -43,7 +44,7 @@ const ResetPassword = () => {
           />
 
           <input
-            className="p-1 w-full px-4 py-3 border border-gray-200 rounded-lg
+            className="p-1 w-full px-4 py-3 bg-gray-200 border border-gray-200 rounded-lg
                        focus:ring-2 focus:ring-blue-200 focus:border-blue-400
                        outline-none transition"
             type="password"
@@ -53,9 +54,7 @@ const ResetPassword = () => {
             required
           />
 
-          {error && (
-            <p className="text-red-500 text-sm mt-1">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
 
           <button
             type="submit"
@@ -70,9 +69,9 @@ const ResetPassword = () => {
       </div>
 
       {/* Right-side */}
-      <div>
+      <div className="hidden lg:block">
         <img
-          src="./src/assets/forget-password.png"
+          src="/src/assets/forget-password.png"
           alt="Forget Password Illustration"
         />
       </div>

@@ -2,22 +2,23 @@ import React from "react";
 
 const Forget = () => {
   return (
-    <main className="h-[calc(100vh-160px)] p-18 gap-8 bg-gray-50 overflow-hidden flex justify-around">
+    <main className="px-3 py-8 lg:p-18 gap-8 bg-gray-50 overflow-hidden flex justify-around">
       {/* Left-side */}
-      <div className="flex flex-col p-16 pb-0 gap-6 bg-gray-100">
-        <button className="px-4 py-2 rounded-lg text-blue-600 hover:bg-blue-100 hover:text-blue-800 font-semibold transition-all duration-300 shadow-sm hover:shadow-md w-fit cursor-pointer">
-          <span className="font-extrabold pt-2">&lt;</span>{" "}
-          <a href="/">Back to Login</a>
-        </button>
+      <div className="w-full lg:w-1/2 flex flex-col p-6 lg:p-16 pb-0 gap-6 bg-gray-100">
+        <a href="/">
+          <button className="px-4 py-2 rounded-lg text-blue-600 hover:bg-blue-100 hover:text-blue-800 font-semibold transition-all duration-300 shadow-sm hover:shadow-md w-fit cursor-pointer">
+            <span className="font-extrabold pt-2">&lt;</span> Back to Login
+          </button>
+        </a>
 
-        <h1 className="text-4xl font-bold">Forget Password</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Forgotten Password?</h1>
         <p>
           Don't worry, happens to all of us. Enter your email address below to
-          recover your passord
+          recover your password
         </p>
-        <form className="flex flex-col justify-center gap-2 w-[60%]">
+        <form className="flex flex-col justify-center gap-2 md:w-[60%]">
           <input
-            className="p-1 w-full px-4 py-3 border border-gray-200 rounded-lg
+            className="p-1 w-full px-4 py-3 bg-gray-200 border border-gray-200 rounded-lg
                          focus:ring-2 focus:ring-blue-200 focus:border-blue-400
                          outline-none transition"
             type="email"
@@ -37,7 +38,7 @@ const Forget = () => {
       </div>
 
       {/* Right-side */}
-      <div className="">
+      <div className="hidden lg:block w-1/2">
         <img
           src="./src/assets/forget-password.png"
           alt="Forget Password Illustration"
