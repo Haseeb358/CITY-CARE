@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
 import PaymentPage from "./components/Payment/PaymentPage.jsx";
@@ -8,6 +7,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import ForgetPasswordPage from "./pages/ForgetPasswordPage.jsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
+import ComplaintPage from "./pages/ComplaintPage.jsx";
 function App() {
   const router = createBrowserRouter([
     {
@@ -25,6 +25,10 @@ function App() {
     {
       path: "/signup",
       element: <SignupPage />,
+    },
+    {
+      path: "/register-complaint",
+      element: <ComplaintPage />,
     },
     {
       path: "/payment",
