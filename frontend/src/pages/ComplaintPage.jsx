@@ -4,7 +4,6 @@ import Navbar from "../components/Navbar/Navbar";
 const ComplaintPage = () => {
   return (
     <>
-      <Navbar />
       <ComplaintForm />
     </>
   );

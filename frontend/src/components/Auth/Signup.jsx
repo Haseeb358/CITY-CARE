@@ -2,7 +2,7 @@ import React from "react";
 
 const Signup = () => {
   return (
-    <main className="flex h-[calc(100vh-160px)] p-2 sm:p-11 gap-8 bg-gray-50 overflow-hidden">
+    <main className="flex p-4 sm:p-11 gap-8 bg-gray-50 overflow-hidden  ">
       {/* Left side - Image with overlay text */}
       <div className="hidden md:block w-1/2 h-full relative rounded-2xl overflow-hidden lg:p-6">
         <img
@@ -27,7 +27,7 @@ const Signup = () => {
             <h1 className="text-3xl font-bold text-gray-800">Create account</h1>
           </div>
 
-          <form className="flex flex-col gap-2 mt-6">
+          <form className="flex flex-col gap-2 mt-8 p-3">
             {/* Full name */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">
