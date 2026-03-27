@@ -5,7 +5,6 @@ import Signup from '../components/Auth/Signup'
 
 const SignupPage = () => {
   return <>
-  <Navbar />
   <Signup />
   </>
 }
