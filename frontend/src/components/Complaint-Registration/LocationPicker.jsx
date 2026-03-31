@@ -1,10 +1,12 @@
-
 const LocationPicker = ({
   formData,
   handleChange,
   setCurrentLocation,
   setShowMap,
+  locationLoading
 }) => {
+  
+
   return (
     <div className="grid grid-cols-1 gap-4">
       {/* Location Section */}
@@ -18,8 +20,9 @@ const LocationPicker = ({
             type="button"
             onClick={setCurrentLocation}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer"
+            disabled={locationLoading}
           >
-            Use Current Location
+            {locationLoading ? "Fetching Location..." : "Use Current Location"}
           </button>
 
           <button
@@ -44,9 +47,9 @@ const LocationPicker = ({
           className="w-full md:w-[50%] px-3 py-2 border border-gray-300 rounded-md"
         />
 
-        {formData.lat && (
+        {formData.location.lat && (
           <p className="text-sm text-gray-500">
-            Coordinates: {formData.lat}, {formData.lng}
+            Coordinates: {formData.location.lat}, {formData.location.lng}
           </p>
         )}
       </div>

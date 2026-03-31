@@ -10,7 +10,7 @@ const PaymentFailure = () => {
   const reason = params.get('reason');
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-red-50 to-rose-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
         {/* Icon */}
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">

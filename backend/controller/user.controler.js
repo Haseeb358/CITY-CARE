@@ -9,11 +9,21 @@ import {sendResetEmail} from "../utils/resetPassEmail.js";
 import getResetToken from "../utils/resetPassToken.js";
 import CryptoJS from "crypto-js";
 import cityModel from "../model/city.model.js";
+import jwt from "jsonwebtoken";
+import complaintModel from "../model/complaint.model.js";
+import feedbackModel from "../model/feedback.model.js";
 
 let registerUser = async (req, res,next) => {
  
     try {
-        let { email, passwordHash, fullName, contactNumber, currentLatitude, currentLongitude, } = req.body;
+        let { email, passwordHash, fullName, contactNumber, location } = req.body;
+        let {currentLatitude, currentLongitude}= location
+        if(typeof location === "string"){
+            location = JSON.parse(location);
+            currentLatitude = location.currentLatitude;
+            currentLongitude = location.currentLongitude;
+         }
+             
         let userExisted = await userModel.findOne({ email: email });
         if (userExisted) {
             let error = new Error("User already exists with this email");
@@ -42,13 +52,13 @@ let registerUser = async (req, res,next) => {
             currentLongitude: currentLongitude,
         });
         let savedComplainant = await newComplainant.save();
-        // let mailOptions = {
-        //     to: savedUser.email,
-        //     subject: "CityCare - Verify your email",
-        //     name : newComplainant.fullName,
-        //     otp : otp,
-        // }
-        //  await sendEmail(mailOptions); 
+        let mailOptions = {
+            to: savedUser.email,
+            subject: "CityCare - Verify your email",
+            name : newComplainant.fullName,
+            otp : otp,
+        }
+         await sendEmail(mailOptions); 
        
         res.status(201).json(
             {
@@ -69,6 +79,7 @@ let verifyOtp = async (req, res,next) => {
     try {
 
         let { email, otp } = req.body;
+        console.log("Email: ", email, "OTP: ", otp);
         let user = await userModel.findOne({ email: email });
         if (!user) {
             let error = new Error("User not found");
@@ -103,6 +114,7 @@ let loginUser = async (req, res,next) => {
     try {
 
         let { email, passwordHash } = req.body;
+        console.log("Login attempt for email: ", email);
         let user = await userModel.findOne({ email: email });
         if (!user) {
             let error = new Error("User not found");
@@ -247,10 +259,11 @@ let assignLoginToEmployee = async (req, res,next) => {
 
 let logOutUser = async (req, res,next) => {
     try {
-        res.cookie("token", "", {
-      expire: new Date(Date.now()),
+        res.clearCookie("token", {
+      secure: true, // Set to true in production (requires HTTPS)
       httpOnly: true,
-      sameSite: "Strict",
+      sameSite: "none",
+
     });
     res.status(200).json({
         success: true,
@@ -264,9 +277,9 @@ let logOutUser = async (req, res,next) => {
 let changeUserPassword = async (req, res,next) => {
 
     try {
-
-        let { email, oldPassword, newPassword  } = req.body;
-        let user = await userModel.findOne({ email: email });
+        let id= req.user._id;
+        let {  oldPassword, newPassword  } = req.body;
+        let user = await userModel.findOne({ _id: id });
         if (!user) {
             let error = new Error("User not found");
             error.status = 404;
@@ -296,6 +309,7 @@ let forgotPassword = async (req, res,next) => {
     try {
         
         let { email } = req.body;
+        console.log("Forgot password request for email: ", email);
         let user = await userModel.findOne({ email: email });
         if (!user) {
             let error = new Error("User not found");
@@ -307,13 +321,13 @@ let forgotPassword = async (req, res,next) => {
         user.resetPasswordExpiryDate = Date.now() + 1000 * 60 * 10; // 10 minute from now
         await user.save();
         let resetUrl = `${process.env.FRONTEND_URL}/reset-password/${RawToken}`;
-        // let mailOptions = {
-        //     to: user.email,
-        //     subject: "CityCare - Password Reset",
-        //     name : user.email,
-        //     resetUrl : resetUrl,
-        // }
-        //  await sendResetEmail(mailOptions); 
+        let mailOptions = {
+            to: user.email,
+            subject: "CityCare - Password Reset",
+            name : user.email,
+            resetUrl : resetUrl,
+        }
+         await sendResetEmail(mailOptions); 
          console.log("Raw Token: ",RawToken);
          
          res.status(200).json({
@@ -337,7 +351,7 @@ let resetUserPassword = async (req, res,next) => {
             resetPasswordExpiryDate: { $gt: Date.now() },
          });
          if(!user){
-            let error = new Error("Invalid or expired password reset token");
+            let error = new Error("Reset link is expired or invalid. Try again with a new link");
             error.status = 400;
             return next(error);
          }
@@ -356,4 +370,261 @@ let resetUserPassword = async (req, res,next) => {
     }
 };
 
-export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser, changeUserPassword,forgotPassword, resetUserPassword};
+let checkLoginStatus = async (req, res,next) => {
+
+    try {
+        
+        let token = req.cookies.token;
+        // remove space from token if exist
+       
+        console.log("Token from cookies:", token);
+        if(!token){
+            return res.status(200).json({
+                success: false,
+                isAuthenticated: false,
+                message: "User is not authenticated",
+            });
+        }
+        // get decoded token dat
+        jwt.verify(token, process.env.JWTSECERET, (err, decodedToken) => {
+                    if (err) {
+                        res.status(200).json({
+                            success: false,
+                            isAuthenticated: false,
+                            message: "User is not authenticated",
+                        });
+                    }
+                    console.log("Decoded token data: ", decodedToken);
+                    return res.status(200).json({
+                        success: true,
+                        isAuthenticated: true,
+                        user: decodedToken,
+                    });
+                });
+        
+
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+let getUserProfile = async (req, res,next) => {
+
+    try {
+        let userId = req.user._id;
+         
+        // only need fullName,contactNumber, city from complainant model
+        // and email from user model
+        let user = await userModel.findById(userId);
+        if(!user){
+            let error = new Error("User not found");
+            error.status = 404;
+            return next(error);
+        }
+       
+        let complainant = await complainantModel.findOne({ userID: userId })
+        if(!complainant){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: "User profile fetched successfully",
+            user: {
+                email: user.email,
+                fullName: complainant.fullName,
+                contactNumber: complainant.contactNumber,
+                city: complainant.city,
+                
+            },
+        });
+
+
+
+    } catch (error) {
+        next(error);
+    }
+
+}
+
+let updateUserProfile = async (req, res,next) => {
+  try {
+    // update profile details like fullName, contactNumber, city
+    let userId = req.user._id;
+    let { fullName, contactNumber, city,lat,lng } = req.body;
+    console.log(lat,"::",lng);
+    let complainant = await complainantModel.findOne({ userID: userId });
+    if (!complainant) {
+      let error = new Error("Complainant record not found for the user");
+      error.status = 404;
+      return next(error);
+    }
+    complainant.fullName = fullName || complainant.fullName;
+    complainant.contactNumber = contactNumber || complainant.contactNumber;
+    complainant.city = city || complainant.city;
+    complainant.currentLatitude=lat || complainant.currentLatitude;
+    complainant.currentLongitude=lng || complainant.currentLongitude;
+    await complainant.save();
+    res.status(200).json({
+      success: true,
+      message: "User profile updated successfully",
+      user: {
+        email: req.user.email,
+        fullName: complainant.fullName,
+        contactNumber: complainant.contactNumber,
+        city: complainant.city,
+      },
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+
+}
+
+let ComplaintMadeByUser = async (req, res,next) => {
+
+    try {
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        let complaints = await complaintModel.find({ complainant: complainat._id }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found for the user",
+                data: [],
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Complaints made by user fetched successfully",
+            data: complaints,
+        });
+    } catch (error) {
+        next(error);
+    }
+
+
+}
+
+// Now we get the complaint of that area where user live by using its current location.
+// and show complaints with radius of 2 km from users live
+
+let ComplaintsOfUserArea = async (req, res,next) => {
+
+    try {
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        
+        }
+
+        console.log("complainant: ",complainat);
+
+        let { currentLatitude, currentLongitude } = complainat;
+        let radiusInMeters = 3000; // 2 km
+        let complaints = await complaintModel.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [currentLongitude, currentLatitude],
+                    },
+                    $maxDistance: radiusInMeters,
+                },
+            },
+        }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found in your area",
+                data: [],
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Complaints of user's area fetched successfully",
+            data: complaints,
+        });
+        
+    } catch (error) {
+        next(error);
+    }
+
+}
+
+let ComplaintsVotedByUser = async (req, res,next) => {
+    try {
+        
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        // and votes >1
+        let complaints = await complaintModel.find({ votesBy: complainat._id, votes: { $gt: 1 } }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+        console.log("Complaints voted by user: ", complaints);
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found that you have voted",
+                data: [],
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Complaints voted by user fetched successfully",
+            data: complaints,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+let postFeedbacksOfUser = async (req, res,next) => {
+
+    try {
+        let {complaintId,text,rating  }=req.body
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        let feedbackData = {
+            complaint: complaintId,
+            complainant: complainat._id,
+            text: text,
+            rating: rating,
+        }
+        let newFeedback = new feedbackModel(feedbackData);
+        await newFeedback.save();
+        res.status(200).json({
+            success: true,
+            message: "Feedback submitted successfully",
+        });
+       
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser, changeUserPassword,forgotPassword, resetUserPassword,checkLoginStatus,getUserProfile,updateUserProfile,ComplaintMadeByUser,ComplaintsOfUserArea,ComplaintsVotedByUser,postFeedbacksOfUser};

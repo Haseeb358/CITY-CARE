@@ -20,6 +20,10 @@ let complainantSchema = mongoose.Schema({
     currentLongitude:{
         type:Number,
         default:null},
+    city:{
+        type:String,
+        default:"Lahore"
+        },
    
 }
     , { timestamps:true}

@@ -40,30 +40,8 @@ let ComplaintSchema= new mongoose.Schema({
         enum: ["Pending", "In-Progress", "Resolved", "Rejected","Assigned","Review"],
         default: "Pending"
     },
-    media:
-    {
-      ByUser:{
-        publicId: {
-        type: String,
-        required: true,
-      },
-      url: {
-        type: String,
-        required: true,
-      },
-      },
-      byTeamLead:{
-        publicId: {
-        type: String,
-        required: false,
-      },
-      url: {
-        type: String,
-        required: false,
-      },
-      },
-
-    },
+    media:[]
+    ,
  votes: {
   type: Number,
   default: 0,
@@ -80,8 +58,11 @@ assignedTeam: {
 outOfServiceZone:{
   type: Boolean,
   default: false,
-}
-  
+},
+addressDescription:{
+  type: String,
+  default: ""
+},
   
 } ,{timestamps: true});
 

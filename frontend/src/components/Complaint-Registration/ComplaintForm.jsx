@@ -6,6 +6,10 @@ import { reverseGeocode } from "../../utils/reverseGeocode";
 import useGeolocation from "../../hooks/useGeolocation";
 import LocationPicker from "./LocationPicker";
 import MapModal from "./MapModal";
+let VITE_API_URL = import.meta.env.VITE_API_URL;
+let VITE_API_COMPLAINANT_ROUTE = import.meta.env.VITE_API_COMPLAINANT_ROUTE;
+import axios from "axios";
+import Loader from "../utilities/Loader";
 
 export default function ComplaintForm() {
   const initialFormData = {
@@ -13,14 +17,17 @@ export default function ComplaintForm() {
     city: "",
     description: "",
     address: "",
-    lat: null,
-    lng: null,
+    location:{lat:null, lng:null}
   };
   const [formData, setFormData] = useState(initialFormData);
   const [files, setFiles] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [marker, setMarker] = useState(null);
+  const [msgFromApi, setMsgFromApi] = useState("");
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loactionLoading, setLocationLoading] = useState(false);
 
   const userLocation = useGeolocation();
 
@@ -41,8 +48,7 @@ export default function ComplaintForm() {
     const address = await reverseGeocode(lat, lng);
     setFormData((prev) => ({
       ...prev,
-      lat,
-      lng,
+      location: { lat, lng },
       address,
     }));
 
@@ -50,6 +56,11 @@ export default function ComplaintForm() {
   };
 
   const setCurrentLocation = async () => {
+      setLocationLoading(true);
+      if (!userLocation) {
+        alert("Unable to fetch current location. Please allow location access and try again.");
+        return;
+      }
     if (!navigator.geolocation) {
       alert("Geolocation not supported");
       return;
@@ -59,10 +70,10 @@ export default function ComplaintForm() {
 
     setFormData((prev) => ({
       ...prev,
-      lat: userLocation[0],
-      lng: userLocation[1],
+      location: { lat: userLocation[0], lng: userLocation[1] },
       address,
     }));
+    setLocationLoading(false);
   };
 
   const handleChange = (e) => {
@@ -75,17 +86,58 @@ export default function ComplaintForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    console.log("Files:", files);
-    setSubmitted(true);
+    setLoading(true);
+     console.log("Submitting form with data:", formData);
+     console.log("Files to upload:", files);
+    let link=`${VITE_API_URL}${VITE_API_COMPLAINANT_ROUTE}/create-complaint`
+    let form = new FormData();
+    form.append("city", formData.city);
+    form.append("category", formData.category);
+    form.append("description", formData.description);
+    form.append("addressDescription", formData.address);
+    form.append("location", JSON.stringify({lng:formData.location.lng, lat:formData.location.lat}));
+    if(files.length>0){
+      // append each file to form data
+      files.forEach((file, index) => {
+        form.append("files", file);
+      });
+    }
+    
+    axios.post(link, form, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
+    })
+    .then((response) => {
+      console.log("Complaint submitted successfully:", response.data);
+      setSubmitted(true);
+      setMsgFromApi(response.data.message);
+      setStatus(response.data.status);
+
+    })
+    .catch((error) => {
+      setSubmitted(true);
+      setMsgFromApi(error.response?.data?.message || "Failed to submit complaint. Please try again.");
+      setStatus(error.response?.data?.status);
+      
+      
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+
+
+
   };
 
   if (submitted) {
-    return <SuccessMessage resetForm={resetForm} />;
+    return <SuccessMessage resetForm={resetForm} msg={msgFromApi} status={status} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <Loader isOpen={loading}></Loader>
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
@@ -133,14 +185,14 @@ export default function ComplaintForm() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                 >
                   <option value="">Select a category</option>
-                  <option value="pothole">Pothole</option>
-                  <option value="manhole">Manhole Issue</option>
-                  <option value="streetlight">Street Light</option>
-                  <option value="garbage">Garbage Collection</option>
-                  <option value="drainage">Drainage Problem</option>
-                  <option value="water">Water Supply</option>
-                  <option value="noise">Noise Pollution</option>
-                  <option value="other">Other</option>
+                  <option value="Pothole">Pothole</option>
+                  <option value="Manhole Issue">Manhole Issue</option>
+                  <option value="Street Light">Street Light</option>
+                  <option value="Garbage Collection">Garbage Collection</option>
+                  <option value="Drainage Problem">Drainage Problem</option>
+                  <option value="Water Supply">Water Supply</option>
+                  <option value="Noise Pollution">Noise Pollution</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
@@ -183,6 +235,7 @@ export default function ComplaintForm() {
               handleChange={handleChange}
               setCurrentLocation={setCurrentLocation}
               setShowMap={setShowMap}
+              locationLoading={loactionLoading}
             />
           </div>
 

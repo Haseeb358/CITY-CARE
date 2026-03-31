@@ -7,11 +7,11 @@ let sendToken_Cookie = (data, statusCode, res, message) => {
                      expiresIn: process.env.JWTEXPIRE || "1d",});
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: true, // Set to true in production (requires HTTPS)
       expires: new Date(
-        Date.now() + process.env.COOKIEEXPIRE * 24 * 60 * 60 * 1000
+        Date.now() + (process.env.COOKIEEXPIRE || 4) * 24 * 60 * 60 * 1000
       ),
-      sameSite: "Strict",
+      sameSite: "none", // Adjust as needed (e.g., "lax" or "none" for cross-site)
     };
     res
       .status(statusCode)

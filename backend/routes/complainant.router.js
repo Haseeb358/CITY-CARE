@@ -5,7 +5,7 @@ import { createComplaint } from "../controller/complainant.controler.js";
 import upload from "../utils/multer.js";
 let router = express.Router();
 
-router.post("/create-complaint",upload.single("file"), authenticateUser, createComplaint);
+router.post("/create-complaint",upload.array("files", 5), authenticateUser, createComplaint);
 
 
 export default router;
