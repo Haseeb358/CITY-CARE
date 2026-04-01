@@ -8,16 +8,37 @@ import fs from "fs";
 import CityModel from "../model/city.model.js";
 import { autoAssignTeam } from "../utils/autoAssignedTeam.js";
 import ComplaintHistoryModel from "../model/complaint-history.model.js";
+import { log } from "console";
 let createComplaint = async (req, res, next) => {
     try {
          
-        let {city,category, description, location } = req.body;
-        
-        // 1️⃣ Resolve complainant from user
-    const complainant = await complainantModel.findOne({
+      let {city,category, description, addressDescription } = req.body;
+      
+       location = JSON.parse(location);
+      // console.log("Received location:", location);
+      // ----------------------
+      // for postman testing
+      // let [lng, lat] = location; 
+      // ----------------------
+
+      // let tempLocatin={
+      // lng:74.2914370,
+      // lat:31.5449325     }
+      //  let {lng, lat} = tempLocatin;
+       let {lng, lat} = location;
+
+      lng = parseFloat(lng);
+      lat = parseFloat(lat);
+      log("Parsed location:", { lat, lng });
+      
+      // res.end("--")
+      // return;
+
+     const complainant = await complainantModel.findOne({
       userID: req.user._id,
     });
    
+
     if (!complainant) {
       return res.status(403).json({
         message: "Only complainants can create complaints",
@@ -27,13 +48,16 @@ let createComplaint = async (req, res, next) => {
     let cityRecord = await CityModel.findOne({name:city, isActive:true});
     if(!cityRecord){
         let error = new Error("City is not serviceable");
-        error.status = 400;
+        error.status = 404;
        return next(error);
       }
 
-    let [lng, lat] = location
-    lng = parseFloat(lng);
-    lat = parseFloat(lat);
+      // let [lng, lat] = location;
+      // lng = parseFloat(lng).toFixed(6);
+      // lat = parseFloat(lat).toFixed(6);
+      // console.log("Parsed location:", { lat, lng });
+    
+    
     let DUPLICATE_RADIUS_METERS = parseInt(process.env.DUPLICATE_RADIUS_METERS) || 200;
 
     // 2️⃣ Auto‑detect zone using GeoJSON polygon
@@ -75,7 +99,7 @@ let createComplaint = async (req, res, next) => {
         let error = new Error("Location is out of service zone");
         error.status = 400;
        return next(error);
-      }
+       }
 
     }
 
@@ -106,34 +130,64 @@ let createComplaint = async (req, res, next) => {
         success: true,
         message: "Duplicate complaint detected. Your vote has been counted.",
         complaint: duplicateComplaint,
+        status: 200
       });
       }
-      return res.status(200).json({
+      return res.status(409).json({
         success: true,
         message: "Duplicate complaint detected. You have already voted for this complaint.",
         complaint: duplicateComplaint,
+        status: 409
       });
     
     }
     
-        let mediaByUser = null;
-        if (!req.file) {
-      return res.status(400).json({
-        ErrorMeassage: "No file to upload",
-      });
-    }
-    let tempFile = path.resolve("uploads", req.file.originalname);
-    fs.writeFileSync(tempFile, req.file.buffer);
+    //     let mediaByUser = null;
+    //     if (!req.file) {
+    //   return res.status(400).json({
+    //     ErrorMeassage: "No file to upload",
+    //   });
+    // }
+    // let tempFile = path.resolve("uploads", req.file.originalname);
+    // fs.writeFileSync(tempFile, req.file.buffer);
 
-    let uploadResult = await cloudinary.uploader.upload(tempFile, {
-      resource_type: "auto",
-      folder: "ComplaintMedia",
-    });
-    mediaByUser = {
-      publicId: uploadResult.public_id,
-      url: uploadResult.secure_url,
-    };
-    fs.unlinkSync(tempFile);
+    // let uploadResult = await cloudinary.uploader.upload(tempFile, {
+    //   resource_type: "auto",
+    //   folder: "ComplaintMedia",
+    // });
+    // mediaByUser = {
+    //   publicId: uploadResult.public_id,
+    //   url: uploadResult.secure_url,
+    // };
+    // fs.unlinkSync(tempFile);
+
+    
+  let mediaByUser = [];
+
+  if (!req.files || req.files.length === 0) {
+  return res.status(400).json({
+    ErrorMessage: "No files uploaded",
+  });
+}
+
+for (let file of req.files) {
+  let tempFile = path.resolve("uploads", file.originalname);
+
+  fs.writeFileSync(tempFile, file.buffer);
+
+  let uploadResult = await cloudinary.uploader.upload(tempFile, {
+    resource_type: "auto",
+    folder: "ComplaintMedia",
+  });
+
+  mediaByUser.push({
+    publicId: uploadResult.public_id,
+    url: uploadResult.secure_url,
+  });
+
+  fs.unlinkSync(tempFile);
+}
+
 
         // 4️⃣ Create complaint
         const complaint = new ComplaintModel({
@@ -145,12 +199,13 @@ let createComplaint = async (req, res, next) => {
             location: {
                 type: "Point",
                  coordinates: [lng, lat], },
-            media: {
-                ByUser: mediaByUser,
-            },
+            media: [
+               ...mediaByUser
+            ],
             votesBy: [complainant._id],
             votes: 1,
             outOfServiceZone: outOfServiceZone,
+            addressDescription: addressDescription
         });
         await complaint.save();
         outOfServiceZone = false;
@@ -183,7 +238,7 @@ let createComplaint = async (req, res, next) => {
         remarks: "Auto-assigned to zone team"
                                             });
       
-        res.status(201).json({ success: true, message: "Complaint created successfully", complaint: complaint });
+        res.status(201).json({ success: true, message: "Complaint created successfully", complaint: complaint,status:201 });
         
     } catch (error) {
         next(error);
