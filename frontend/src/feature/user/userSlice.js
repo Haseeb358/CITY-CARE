@@ -49,6 +49,7 @@ let initialState = {
   error: null,
   success: false,
   isAuthenticated: false,
+  checkUserLoading:true,
 };
 
 let userSlice = createSlice({
@@ -65,10 +66,12 @@ let userSlice = createSlice({
     setUser(state,action){
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.checkUserLoading = false;
     },
     logout(state){
         state.user = null;
         state.isAuthenticated = false;
+        state.checkUserLoading = false;
     },   
 
     },

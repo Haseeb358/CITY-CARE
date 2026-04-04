@@ -17,12 +17,17 @@ export default function Logout() {
   const handleLogout = async () => {
     try {
       let link = `${apiUrl}${userRoute}/logout`;
-      await axios.post(link, {}, { withCredentials: true });
+      let response = await axios.post(link, {}, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true, // Include cookies in the request
+      });
       dispatch(logout());
         toast.success("Logged out successfully!");
         navigate("/");
     } catch (error) {
-      toast.error(error.message || "Error occurred while logging out. Please try again.");
+      toast.error(error.response?.data?.message || "Error occurred while logging out. Please try again.");
       console.error("Error occurred while logging out:", error);
     }
   };

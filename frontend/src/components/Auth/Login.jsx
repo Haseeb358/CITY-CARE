@@ -20,11 +20,9 @@ const Login = () => {
   } = useForm();
 
   const onSubmit = (data) => {
-    console.log("Login data: ", data);
     dispatch(loginUser(data))
       .unwrap()
       .then(() => {
-        
         toast.success("Login successful");
         navigate("/");
       })
