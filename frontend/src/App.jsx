@@ -21,10 +21,16 @@ import { useEffect } from "react";
 const apiUrl = import.meta.env.VITE_API_URL;
 const userRoute = import.meta.env.VITE_API_USER_ROUTE;
 import { useDispatch } from "react-redux";
-import { setUser } from "./feature/user/userSlice.js";
+import { setUser,logout } from "./feature/user/userSlice.js";
 import axios from "axios";
 import ComplaintHistory from "./pages/ComplaintHistory.jsx";
+import ProtectedRoute from "./components/Auth/ProtectedRoute.jsx";
+import NotFound from "./pages/NotFound.jsx";
+
+
 function App() {
+
+
   const dispatch = useDispatch();
   useEffect(() => {
      let checkLoginStatus = async () => {
@@ -40,10 +46,13 @@ function App() {
           console.log("Login status response: ", response.data);
          if(response.data.success){
           dispatch(setUser(response.data?.user));
+         }else{
+          dispatch(logout());
          }
      }
       catch (error) {
         // console.log("Error checking login status--: ", error.response?.data || "An error occurred while checking login status.");
+        dispatch(logout());
         
       }
       };
@@ -71,17 +80,25 @@ function App() {
       <Route path="reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="otp" element={<OTPInput />} />
       <Route path="about-us" element={<AboutUs />} />
-      <Route path="complaint-history" element={<ComplaintHistory />} />
-      <Route path="user-profile" element={<Userprofile />} />
+      {/* <Route path="complaint-history" element={<ComplaintHistory />} /> */}
+      {/* <Route path="user-profile" element={<Userprofile />} /> */}
       <Route path="contact-us" element={<Contactus />} />
       <Route path="login" element={<LoginPage />} />
       <Route path="signup" element={<SignupPage />} />
-      <Route path="register-complaint" element={<ComplaintPage />} />
+      {/* <Route path="register-complaint" element={<ComplaintPage />} /> */}
       <Route path="payment">
         <Route index element={<PaymentPage />} />
         <Route path="success" element={<PaymentSuccess />} />
         <Route path="failure" element={<PaymentFailure />} />
       </Route>
+      
+      {/* protected routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="register-complaint" element={<ComplaintPage />} />
+        <Route path="complaint-history" element={<ComplaintHistory />} />
+        <Route path="user-profile" element={<Userprofile />} />
+      </Route>
+      <Route path="*" element={<NotFound />} />
     </Route>
     
     

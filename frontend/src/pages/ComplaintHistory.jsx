@@ -301,6 +301,11 @@ function ComplaintCard({ data, activeTab }) {
             {data.CurrentStatus}
           </span>
         </p>
+        {/* date */}
+        <p>
+          <b>Created:</b>{" "}
+          {new Date(data.createdAt).toLocaleDateString()}
+        </p>
 
         <p><b>Votes:</b> {data.votes}</p>
 
