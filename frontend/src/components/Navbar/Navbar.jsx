@@ -6,12 +6,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useSelector } from "react-redux";
-import Logout from "../Auth/Logout";
+import DropDown from "./DropDown";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
-
+  
   function toggleMenu() {
     setIsMenuOpen(!isMenuOpen);
   }
@@ -27,10 +27,8 @@ const Navbar = () => {
         <NavLinks></NavLinks>
       </div>
       {isAuthenticated ?(<div className="mr-8 flex justify-between items-center gap-4">
-        <Logout></Logout>
-        <NavLink to={"/user-profile"} className={({isActive})=>`${isActive ? "underline text-orange-900 underline-offset-4" : ""}`}>
-          <button className="sm:text-lg font-medium cursor-pointer ">Profile</button>
-        </NavLink>
+        
+        <DropDown></DropDown>
         
       </div>):(<div className="mr-8 flex justify-between items-center gap-4">
         <NavLink to={"/login"} className={({isActive})=>`${isActive ? "underline text-orange-900 underline-offset-4" : ""}`}>

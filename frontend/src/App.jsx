@@ -66,7 +66,8 @@ function App() {
      {
       duration: 5000,
       style: {
-        fontSize: "26px",
+        fontSize: "16px",
+        fontWeight: "600",
       },
      }
     } />  

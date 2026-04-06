@@ -6,7 +6,7 @@ const authenticateUser = (req, res, next) => {
         const token = req.cookies.token || req.header("Authorization")?.replace("Bearer ", "");
         
         if (!token) {
-            let error = new Error("Unauthorized: No token provided");
+            let error = new Error("Unauthorized: Please log in to access this resource");
             error.status = 401;
             return next(error);
         }

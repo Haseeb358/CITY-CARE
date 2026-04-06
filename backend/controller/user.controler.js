@@ -12,7 +12,8 @@ import cityModel from "../model/city.model.js";
 import jwt from "jsonwebtoken";
 import complaintModel from "../model/complaint.model.js";
 import feedbackModel from "../model/feedback.model.js";
-
+import ComplaintCategoryModel from "../model/complaint-Category.model.js";
+import contactUSModel from "../model/contactUS.model.js";
 let registerUser = async (req, res,next) => {
  
     try {
@@ -132,11 +133,14 @@ let loginUser = async (req, res,next) => {
             error.status = 400;
             return next(error);
         }
+        // find name from complainant model using user._id
+        let complainant = await complainantModel.findOne({ userID: user._id });
       
         let data = {
             _id: user._id,
             role: user.role,
-            email: user.email,   
+            email: user.email,
+            fullName: complainant?.fullName || null,
         }
         sendToken_Cookie(data, 200, res, "Login Successful");  
     } catch (error) {
@@ -438,6 +442,7 @@ let getUserProfile = async (req, res,next) => {
                 fullName: complainant.fullName,
                 contactNumber: complainant.contactNumber,
                 city: complainant.city,
+                _id: user._id,
                 
             },
         });
@@ -455,7 +460,6 @@ let updateUserProfile = async (req, res,next) => {
     // update profile details like fullName, contactNumber, city
     let userId = req.user._id;
     let { fullName, contactNumber, city,lat,lng } = req.body;
-    console.log(lat,"::",lng);
     let complainant = await complainantModel.findOne({ userID: userId });
     if (!complainant) {
       let error = new Error("Complainant record not found for the user");
@@ -544,6 +548,8 @@ let ComplaintsOfUserArea = async (req, res,next) => {
                     $maxDistance: radiusInMeters,
                 },
             },
+            // not show the complaints made by user itself in this list
+            complainant: { $ne: complainat._id },
         }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
 
         if(complaints.length === 0){
@@ -626,5 +632,41 @@ let postFeedbacksOfUser = async (req, res,next) => {
     }
 }
 
+let getComplaintCategories = async (req, res,next) => {
+    try {
+        // get active categories only and sorted
+        let categories = await ComplaintCategoryModel.find({ isActive: true }).sort({ name: 1 });
+        res.status(200).json({
+            success: true,
+            message: "Complaint categories fetched successfully",
+            categories,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 
-export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser, changeUserPassword,forgotPassword, resetUserPassword,checkLoginStatus,getUserProfile,updateUserProfile,ComplaintMadeByUser,ComplaintsOfUserArea,ComplaintsVotedByUser,postFeedbacksOfUser};
+let contactUs = async (req, res,next) => {
+
+    try {
+        
+        let { name, email, message,newsletter } = req.body;
+        let newMessage = new contactUSModel({
+            name:name || "Anonymous",
+            email,
+            message: message || "",
+            newsletter: newsletter || false,
+        });
+        await newMessage.save();
+        res.status(200).json({
+            success: true,
+            message: "Your message has been received. We will get back to you shortly.",
+        });
+
+    } catch (error) {
+        next(error);
+    }
+
+}
+
+export { registerUser , verifyOtp,loginUser,getAllUsers,createEmployeeRecord,assignLoginToEmployee,logOutUser, changeUserPassword,forgotPassword, resetUserPassword,checkLoginStatus,getUserProfile,updateUserProfile,ComplaintMadeByUser,ComplaintsOfUserArea,ComplaintsVotedByUser,postFeedbacksOfUser,getComplaintCategories,contactUs};
