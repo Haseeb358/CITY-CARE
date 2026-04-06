@@ -3,8 +3,6 @@ import { Navigate, Outlet } from "react-router-dom";
 
 export default function ProtectedRoute() {
     const {isAuthenticated,checkUserLoading} = useSelector((state) => state.user);
-
-    console.log("ProtectedRoute - isAuthenticated:", isAuthenticated);
   
   if (checkUserLoading) {
     return (

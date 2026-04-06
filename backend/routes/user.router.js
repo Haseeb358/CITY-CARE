@@ -1,7 +1,7 @@
 import express from "express";
 import { authorizeRoles } from "../middleware/verifyRole.js";
 import authenticateUser from "../middleware/verifyJWT.js";
-import { registerUser,getUserProfile, verifyOtp, loginUser, getAllUsers,createEmployeeRecord,assignLoginToEmployee ,logOutUser,changeUserPassword,forgotPassword,resetUserPassword,checkLoginStatus,updateUserProfile,ComplaintMadeByUser,ComplaintsOfUserArea,ComplaintsVotedByUser,postFeedbacksOfUser} from "../controller/user.controler.js";
+import { registerUser,getUserProfile, verifyOtp, loginUser, getAllUsers,createEmployeeRecord,assignLoginToEmployee ,logOutUser,changeUserPassword,forgotPassword,resetUserPassword,checkLoginStatus,updateUserProfile,ComplaintMadeByUser,ComplaintsOfUserArea,ComplaintsVotedByUser,postFeedbacksOfUser,getComplaintCategories,contactUs} from "../controller/user.controler.js";
 
 const router = express.Router();
 
@@ -22,4 +22,6 @@ router.get("/complaint-made", authenticateUser, ComplaintMadeByUser);
 router.get("/complaints-of-user-area", authenticateUser, ComplaintsOfUserArea);
 router.get("/complaints-voted", authenticateUser, ComplaintsVotedByUser);
 router.post("/feedback-posted", authenticateUser, postFeedbacksOfUser);
+router.get("/complaint-categories", getComplaintCategories);
+router.post("/contact-us", contactUs);
 export default router;

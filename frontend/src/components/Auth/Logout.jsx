@@ -35,8 +35,7 @@ export default function Logout() {
 
   return (
     <>
-      <button className="sm:text-lg font-medium cursor-pointer
-        " onClick={handleLogout}>
+      <button className="cursor-pointer" onClick={handleLogout}>
         Logout
       </button>
     </>

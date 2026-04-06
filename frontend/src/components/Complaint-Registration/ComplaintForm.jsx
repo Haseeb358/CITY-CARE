@@ -8,8 +8,10 @@ import LocationPicker from "./LocationPicker";
 import MapModal from "./MapModal";
 let VITE_API_URL = import.meta.env.VITE_API_URL;
 let VITE_API_COMPLAINANT_ROUTE = import.meta.env.VITE_API_COMPLAINANT_ROUTE;
+let VITE_API_USER_ROUTE = import.meta.env.VITE_API_USER_ROUTE;
 import axios from "axios";
 import Loader from "../utilities/Loader";
+import { useEffect } from "react";
 
 export default function ComplaintForm() {
   const initialFormData = {
@@ -28,6 +30,8 @@ export default function ComplaintForm() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loactionLoading, setLocationLoading] = useState(false);
+  let [ctg, setCtg] = useState(null);
+
 
   const userLocation = useGeolocation();
 
@@ -131,6 +135,17 @@ export default function ComplaintForm() {
 
   };
 
+  useEffect(() => {
+    // Fetch complaint categories from the API
+    axios.get(`${VITE_API_URL}${VITE_API_USER_ROUTE}/complaint-categories`)
+      .then((response) => {
+        setCtg(response.data.categories);
+      })
+      .catch((error) => {
+        console.error("Error fetching complaint categories:", error);
+      });
+  }, []);
+
   if (submitted) {
     return <SuccessMessage resetForm={resetForm} msg={msgFromApi} status={status} />;
   }
@@ -185,13 +200,9 @@ export default function ComplaintForm() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                 >
                   <option value="">Select a category</option>
-                  <option value="Pothole">Pothole</option>
-                  <option value="Manhole Issue">Manhole Issue</option>
-                  <option value="Street Light">Street Light</option>
-                  <option value="Garbage Collection">Garbage Collection</option>
-                  <option value="Drainage Problem">Drainage Problem</option>
-                  <option value="Water Supply">Water Supply</option>
-                  <option value="Noise Pollution">Noise Pollution</option>
+                  {ctg && ctg.map((category) => (
+                    <option key={category._id} value={category.name}>{category.name}</option>
+                  ))}
                   <option value="Other">Other</option>
                 </select>
               </div>

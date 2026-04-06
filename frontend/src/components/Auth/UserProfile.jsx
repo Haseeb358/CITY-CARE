@@ -5,6 +5,8 @@ const userRoute = import.meta.env.VITE_API_USER_ROUTE;
 import axios from "axios";
 import tost from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { useSelector,useDispatch } from "react-redux";
+import { setUser } from "../../feature/user/userSlice.js";
 
 
 const UserProfile = () => {
@@ -12,6 +14,7 @@ const UserProfile = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [locationLoaded, setLocationLoaded] = useState(false);
+  const dispatch = useDispatch();
 
   // Profile form
   const {
@@ -37,12 +40,7 @@ const UserProfile = () => {
         // 👉 Replace with your API
        let link = `${apiUrl}${userRoute}/profile`;
         const response = await axios.get(link, { withCredentials: true });
-        console.log("API Response:", response);
         const data = response.data.user;
-        console.log("--User Data:", data);
-       
-        
-
         setUserData(data);
         reset({
           fullName: data.fullName,
@@ -56,7 +54,7 @@ const UserProfile = () => {
     };
 
     fetchUser();
-  }, [reset]);
+  }, [reset, ]);
 
   // 🔹 Update profile
   const onSubmit = async (formData) => {
@@ -67,7 +65,7 @@ const UserProfile = () => {
       let link = `${apiUrl}${userRoute}/update-profile`;
       const response = await axios.put(link, formData, { withCredentials: true });
       let data = response.data;
-      
+      dispatch(setUser(data.user));
       setUserData(data.user);
       reset({
         fullName: data.user.fullName,

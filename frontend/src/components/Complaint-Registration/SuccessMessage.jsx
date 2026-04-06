@@ -72,6 +72,9 @@ const SuccessMessage = ({ resetForm, msg, status }) => {
         { status == 403 && <p className="text-gray-600 mb-6">
           You are not authorized to submit a complaint. Please log in to your account and try again.
         </p>}
+        {status == 500 && <p className="text-gray-600 mb-6">
+          An error occurred while submitting your complaint. Please try again later.
+        </p>}
         <button
 
           onClick={() => resetForm()}

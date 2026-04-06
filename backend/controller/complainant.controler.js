@@ -8,43 +8,34 @@ import fs from "fs";
 import CityModel from "../model/city.model.js";
 import { autoAssignTeam } from "../utils/autoAssignedTeam.js";
 import ComplaintHistoryModel from "../model/complaint-history.model.js";
+import ComplaintCategoryModel from "../model/complaint-Category.model.js";
 import { log } from "console";
 let createComplaint = async (req, res, next) => {
     try {
          
-      let {city,category, description, addressDescription } = req.body;
-      
+      let {city,category, description, addressDescription,location } = req.body;
        location = JSON.parse(location);
-      // console.log("Received location:", location);
+      
       // ----------------------
       // for postman testing
       // let [lng, lat] = location; 
       // ----------------------
 
-      // let tempLocatin={
-      // lng:74.2914370,
-      // lat:31.5449325     }
-      //  let {lng, lat} = tempLocatin;
-       let {lng, lat} = location;
+      let {lng, lat} = location;
 
       lng = parseFloat(lng);
       lat = parseFloat(lat);
-      log("Parsed location:", { lat, lng });
-      
-      // res.end("--")
-      // return;
 
      const complainant = await complainantModel.findOne({
       userID: req.user._id,
     });
    
-
     if (!complainant) {
       return res.status(403).json({
         message: "Only complainants can create complaints",
       });
     }
-    // Verify city
+    
     let cityRecord = await CityModel.findOne({name:city, isActive:true});
     if(!cityRecord){
         let error = new Error("City is not serviceable");
@@ -52,16 +43,11 @@ let createComplaint = async (req, res, next) => {
        return next(error);
       }
 
-      // let [lng, lat] = location;
-      // lng = parseFloat(lng).toFixed(6);
-      // lat = parseFloat(lat).toFixed(6);
-      // console.log("Parsed location:", { lat, lng });
-    
-    
+     
     let DUPLICATE_RADIUS_METERS = parseInt(process.env.DUPLICATE_RADIUS_METERS) || 200;
 
-    // 2️⃣ Auto‑detect zone using GeoJSON polygon
-    const theZone = await Zone.findOne({
+    //  Auto‑detect zone using GeoJSON polygon
+    let theZone = await Zone.findOne({
       city: cityRecord._id,
       geometry: {
         $geoIntersects: {
@@ -73,12 +59,11 @@ let createComplaint = async (req, res, next) => {
       },
     });
 
-  
    let outOfServiceZone = false;
     if (!theZone) {//-----------TODO
       
       // assign to zone close to location. Not far than 5 km
-      const nearbyZone = await Zone.findOne({
+      let nearbyZone = await Zone.findOne({
         city: cityRecord._id,
         geometry: {
           $near: {
@@ -102,8 +87,10 @@ let createComplaint = async (req, res, next) => {
        }
 
     }
+    
+   
 
-    // 3️⃣ Check for duplicate complaint
+    //  Check for duplicate complaint
     const duplicateComplaint = await ComplaintModel.findOne({
       category,
       city: cityRecord._id,
@@ -141,27 +128,7 @@ let createComplaint = async (req, res, next) => {
       });
     
     }
-    
-    //     let mediaByUser = null;
-    //     if (!req.file) {
-    //   return res.status(400).json({
-    //     ErrorMeassage: "No file to upload",
-    //   });
-    // }
-    // let tempFile = path.resolve("uploads", req.file.originalname);
-    // fs.writeFileSync(tempFile, req.file.buffer);
-
-    // let uploadResult = await cloudinary.uploader.upload(tempFile, {
-    //   resource_type: "auto",
-    //   folder: "ComplaintMedia",
-    // });
-    // mediaByUser = {
-    //   publicId: uploadResult.public_id,
-    //   url: uploadResult.secure_url,
-    // };
-    // fs.unlinkSync(tempFile);
-
-    
+        
   let mediaByUser = [];
 
   if (!req.files || req.files.length === 0) {
@@ -189,7 +156,7 @@ for (let file of req.files) {
 }
 
 
-        // 4️⃣ Create complaint
+        //  Create complaint
         const complaint = new ComplaintModel({
             complainant: complainant._id,
             category,
@@ -209,7 +176,7 @@ for (let file of req.files) {
         });
         await complaint.save();
         outOfServiceZone = false;
-        // 5️⃣ Log complaint creation in history
+        //  Log complaint creation in history
         const complaintHistory = new ComplaintHistoryModel({
           complaint: complaint._id,
           actionType: "CREATED",
@@ -225,24 +192,33 @@ for (let file of req.files) {
           complaint.assignedTeam = assignedTeam._id;
           complaint.CurrentStatus = "Assigned";
           await complaint.save();
-        }
-       // log complaint history creation 
 
+        
+        // log complaint history creation 
+        
         await ComplaintHistoryModel.create({
         complaint: complaint._id,
         actionType: "ASSIGNED",
         oldStatus: "Pending",
         newStatus: "Assigned",
-        team: assignedTeam._id,
+        team: assignedTeam?._id || null,
         actedBy: null, // system auto assignment
         remarks: "Auto-assigned to zone team"
                                             });
       
         res.status(201).json({ success: true, message: "Complaint created successfully", complaint: complaint,status:201 });
+
+        }
+        else{
+          res.status(201).json({ success: true, message: "Complaint created successfully ", complaint: complaint,status:201 });
+        } 
+       
         
     } catch (error) {
         next(error);
     }
 }
+
+
 
 export { createComplaint };
