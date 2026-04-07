@@ -9,7 +9,7 @@ import CityModel from "../model/city.model.js";
 import { autoAssignTeam } from "../utils/autoAssignedTeam.js";
 import ComplaintHistoryModel from "../model/complaint-history.model.js";
 import ComplaintCategoryModel from "../model/complaint-Category.model.js";
-import { log } from "console";
+import feedbackModel from "../model/feedback.model.js";
 let createComplaint = async (req, res, next) => {
     try {
          
@@ -219,6 +219,160 @@ for (let file of req.files) {
     }
 }
 
+let ComplaintMadeByUser = async (req, res,next) => {
+
+    try {
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        let complaints = await ComplaintModel.find({ complainant: complainat._id }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found for the user",
+                data: [],
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Complaints made by user fetched successfully",
+            data: complaints,
+        });
+    } catch (error) {
+        next(error);
+    }
 
 
-export { createComplaint };
+}
+
+let ComplaintsOfUserArea = async (req, res,next) => {
+
+    try {
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        
+        }
+
+        console.log("complainant: ",complainat);
+
+        let { currentLatitude, currentLongitude } = complainat;
+        let radiusInMeters = 3000; // 2 km
+        let complaints = await ComplaintModel.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [currentLongitude, currentLatitude],
+                    },
+                    $maxDistance: radiusInMeters,
+                },
+            },
+            // not show the complaints made by user itself in this list
+            complainant: { $ne: complainat._id },
+        }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found in your area",
+                data: [],
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Complaints of user's area fetched successfully",
+            data: complaints,
+        });
+        
+    } catch (error) {
+        next(error);
+    }
+
+}
+
+let ComplaintsVotedByUser = async (req, res,next) => {
+    try {
+        
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        // and votes >1
+        let complaints = await ComplaintModel.find({ votesBy: complainat._id, votes: { $gt: 1 } }).populate("complainant", "fullName").populate("zone", "name").populate("assignedTeam", "name");
+        console.log("Complaints voted by user: ", complaints);
+        if(complaints.length === 0){
+            return res.status(200).json({
+                success: true,
+                message: "No complaints found that you have voted",
+                data: [],
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Complaints voted by user fetched successfully",
+            data: complaints,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+let postFeedbacksOfUser = async (req, res,next) => {
+
+    try {
+        let {complaintId,text,rating  }=req.body
+        let userId = req.user._id;
+        let complainat = await complainantModel.findOne({ userID: userId });
+        if(!complainat){
+            let error = new Error("Complainant record not found for the user");
+            error.status = 404;
+            return next(error);
+        }
+        let feedbackData = {
+            complaint: complaintId,
+            complainant: complainat._id,
+            text: text,
+            rating: rating,
+        }
+        let newFeedback = new feedbackModel(feedbackData);
+        await newFeedback.save();
+        res.status(200).json({
+            success: true,
+            message: "Feedback submitted successfully",
+        });
+       
+    } catch (error) {
+        next(error);
+    }
+}
+
+let getComplaintCategories = async (req, res,next) => {
+    try {
+        // get active categories only and sorted
+        let categories = await ComplaintCategoryModel.find({ isActive: true }).sort({ name: 1 });
+        res.status(200).json({
+            success: true,
+            message: "Complaint categories fetched successfully",
+            categories,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+export { createComplaint, ComplaintsOfUserArea, ComplaintsVotedByUser, postFeedbacksOfUser, getComplaintCategories ,ComplaintMadeByUser};

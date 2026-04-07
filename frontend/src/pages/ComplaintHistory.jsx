@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 const apiUrl = import.meta.env.VITE_API_URL;
-const userRoute = import.meta.env.VITE_API_USER_ROUTE;
+const complainanatRoute = import.meta.env.VITE_API_COMPLAINANT_ROUTE;
 
 const STATUS_FILTERS = [
   "All",
@@ -28,12 +28,12 @@ export default function ComplaintHistory() {
     try {
       setLoading(true);
      
-      let link = `${apiUrl}${userRoute}/complaint-made`;
+      let link = `${apiUrl}${complainanatRoute}/complaint-made`;
     //   1st we only fetch complaints made by user,  on client side to avoid multiple api calls. and test ui
 
          const myRes = await axios.get(link, { withCredentials: true });
-         const areaRes = await axios.get(`${apiUrl}${userRoute}/complaints-of-user-area`, { withCredentials: true });
-        const votedRes = await axios.get(`${apiUrl}${userRoute}/complaints-voted`, { withCredentials: true });       
+         const areaRes = await axios.get(`${apiUrl}${complainanatRoute}/complaints-of-user-area`, { withCredentials: true });
+        const votedRes = await axios.get(`${apiUrl}${complainanatRoute}/complaints-voted`, { withCredentials: true });       
 
     
 
@@ -253,20 +253,22 @@ function ComplaintCard({ data, activeTab }) {
       setcLoading(true);
 
       console.log("Submitting feedback:", { complaintId: data._id, feedback, rating });
-      let link= `${apiUrl}${userRoute}/feedback-posted`;
+      let link= `${apiUrl}${complainanatRoute}/feedback-posted`;
         await axios.post(link, {
           complaintId: data._id,
           text: feedback,
           rating,
         }, { withCredentials: true }).then((res) => {
           console.log("Feedback response:", res.data);
+        }).catch((err) => {
+          console.log("Feedback error:", err.response ? err.response.data : err.message);
         });
 
 
       setSubmitted(true);
       setShowFeedback(false);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
     } finally {
       setcLoading(false);
     }

@@ -8,7 +8,6 @@ import LocationPicker from "./LocationPicker";
 import MapModal from "./MapModal";
 let VITE_API_URL = import.meta.env.VITE_API_URL;
 let VITE_API_COMPLAINANT_ROUTE = import.meta.env.VITE_API_COMPLAINANT_ROUTE;
-let VITE_API_USER_ROUTE = import.meta.env.VITE_API_USER_ROUTE;
 import axios from "axios";
 import Loader from "../utilities/Loader";
 import { useEffect } from "react";
@@ -137,7 +136,7 @@ export default function ComplaintForm() {
 
   useEffect(() => {
     // Fetch complaint categories from the API
-    axios.get(`${VITE_API_URL}${VITE_API_USER_ROUTE}/complaint-categories`)
+    axios.get(`${VITE_API_URL}${VITE_API_COMPLAINANT_ROUTE}/complaint-categories`)
       .then((response) => {
         setCtg(response.data.categories);
       })
