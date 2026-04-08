@@ -202,7 +202,7 @@ export default function ComplaintForm() {
                   {ctg && ctg.map((category) => (
                     <option key={category._id} value={category.name}>{category.name}</option>
                   ))}
-                  <option value="Other">Other</option>
+                  
                 </select>
               </div>
 
