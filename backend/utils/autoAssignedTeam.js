@@ -1,12 +1,13 @@
 import Complaint  from "../model/complaint.model.js";
 import Team from "../model/team.model.js";
 
-export const autoAssignTeam = async (complaint) => {
+export const autoAssignTeam = async (complaint,session) => {
   // 1️⃣ Get all active teams in the same zone
-  const teams = await Team.find({
+  try {
+    const teams = await Team.find({
     zone: complaint.zone,
     isActive: true,
-  });
+  }).session(session);
 
   if (!teams.length) return null;
 
@@ -16,7 +17,7 @@ export const autoAssignTeam = async (complaint) => {
       const count = await Complaint.countDocuments({
         assignedTeam: team._id,
         CurrentStatus: { $in: ["Assigned", "In-Progress"] },
-      });
+      }).session(session);
       return { team, count };
     })
   );
@@ -25,4 +26,10 @@ export const autoAssignTeam = async (complaint) => {
   teamLoad.sort((a, b) => a.count - b.count);
 
   return teamLoad[0].team;
+    
+  } catch (error) {
+    console.error("Error occurred while auto-assigning team:", error);
+    throw error;
+
+  }
 };
