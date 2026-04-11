@@ -1,70 +1,71 @@
 
 import mongoose from "mongoose";
 
-let ComplaintSchema= new mongoose.Schema({
-     complainant:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "complainant",
-        required: true
-     },
-     category:{
-        type: String,
-        required: true
-     },
-     city:{
-       type:String || mongoose.Schema.Types.ObjectId,
-       required:true
-     },
-     zone:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Zone",
-        required:true
-     },
-     description:{
-        type: String,
-        required: true
-     },
-   location: {
-    type: {
+let ComplaintSchema = new mongoose.Schema({
+  complainant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "complainant",
+    required: true
+  },
+  category: {
     type: String,
-    enum: ["Point"],
-    default: "Point",
+    required: true
   },
-  coordinates: {
-    type: [Number], // [lng, lat]
-    required: true,
+  city: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "City",
+    required: true
   },
-},
-     CurrentStatus:{
-        type: String,
-        enum: ["Pending", "In-Progress", "Resolved", "Rejected","Assigned","Review"],
-        default: "Pending"
+  zone: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Zone",
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
     },
-    media:[]
-    ,
- votes: {
-  type: Number,
-  default: 0,
-},
-votesBy: [{
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "complainant",
-}],
-assignedTeam: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "team",
-  default: null,
-},
-outOfServiceZone:{
-  type: Boolean,
-  default: false,
-},
-addressDescription:{
-  type: String,
-  default: ""
-},
-  
-} ,{timestamps: true});
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+    },
+  },
+  CurrentStatus: {
+    type: String,
+    enum: ["Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Review"],
+    default: "Pending"
+  },
+  media: []
+  ,
+  votes: {
+    type: Number,
+    default: 0,
+  },
+  votesBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "complainant",
+  }],
+  assignedTeam: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "team",
+    default: null,
+  },
+  outOfServiceZone: {
+    type: Boolean,
+    default: false,
+  },
+  addressDescription: {
+    type: String,
+    default: ""
+  },
+
+}, { timestamps: true });
 
 ComplaintSchema.index({ location: "2dsphere" });
 
