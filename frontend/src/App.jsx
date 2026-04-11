@@ -26,6 +26,7 @@ import axios from "axios";
 import ComplaintHistory from "./pages/ComplaintHistory.jsx";
 import ProtectedRoute from "./components/Auth/ProtectedRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 
 
 function App() {
@@ -98,6 +99,7 @@ function App() {
         <Route path="register-complaint" element={<ComplaintPage />} />
         <Route path="complaint-history" element={<ComplaintHistory />} />
         <Route path="user-profile" element={<Userprofile />} />
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Route>

@@ -194,8 +194,12 @@ let getAnalyticsData = async (query) => {
     // 1. Build Base Match Stage
     let matchStage = {};
 
+    let cityObjectId = null;
     if (city && city !== "all") {
-        matchStage.city = new mongoose.Types.ObjectId(city);
+        let cityDoc = await City.findOne({ name: city });
+        cityObjectId = cityDoc ? cityDoc._id : new mongoose.Types.ObjectId();
+
+        matchStage.city = cityObjectId;
     }
 
     if (category && category !== "all") {
@@ -231,8 +235,8 @@ let getAnalyticsData = async (query) => {
     });
 
     const activeTeamsFilter = { isActive: true };
-    if (city && city !== "all") {
-        activeTeamsFilter.city = new mongoose.Types.ObjectId(city);
+    if (city && city !== "all" && cityObjectId) {
+        activeTeamsFilter.city = cityObjectId;
     }
     const activeTeams = await teamModel.countDocuments(activeTeamsFilter);
 
