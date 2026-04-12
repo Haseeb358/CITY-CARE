@@ -2,7 +2,7 @@ import express from "express";
 import { authorizeRoles } from "../middleware/verifyRole.js";
 import authenticateUser from "../middleware/verifyJWT.js";
 import {createCity} from "../controller/admin.controler.js";
-import { complaintCategories,getAllUsers, createEmployeeRecord , updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport} from "../controller/admin.controler.js";
+import { complaintCategories,getAllUsers, createEmployeeRecord , updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions } from "../controller/admin.controler.js";
 
 let router = express.Router();
 
@@ -14,5 +14,6 @@ router.put("/update-employee/:id",authenticateUser,authorizeRoles("admin"), upda
 router.delete("/delete-employee/:id", authenticateUser, authorizeRoles("admin"), deleteEmployeeRecord);
 router.get("/analytics", authenticateUser, authorizeRoles("admin"), getAdminAnalytics);
 router.get("/generate-report", authenticateUser, authorizeRoles("admin"), generateReport);
+router.get("/filter-options", authenticateUser, authorizeRoles("admin"), getFilterOptions);
 
 export default router;

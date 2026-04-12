@@ -8,6 +8,8 @@ const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const [filterOptions, setFilterOptions] = useState({ cities: [], categories: [] });
 
   // Filters
   const [timeFilter, setTimeFilter] = useState('last30days');
@@ -38,11 +40,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchFilterOptions = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const endpoint = `${apiUrl}/api/admin/filter-options`;
+      const response = await axios.get(endpoint, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setFilterOptions(response.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch filter options", err);
+    }
+  };
+
   const handleExportPDF = async () => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const endpoint = `${apiUrl}/api/admin/generate-report?timeFilter=${timeFilter}&city=${cityFilter}&category=${categoryFilter}`;
   window.open(endpoint, '_blank');
 };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
 
   useEffect(() => {
     fetchAnalytics();
@@ -73,8 +95,9 @@ const AdminDashboard = () => {
               onChange={(e) => setCityFilter(e.target.value)}
             >
               <option value="all">All cities</option>
-              <option value="Lahore">Lahore</option>
-              <option value="Karachi">Karachi</option>
+              {filterOptions.cities.map((city, idx) => (
+                <option key={idx} value={city}>{city}</option>
+              ))}
             </select>
             <select
               className="bg-[#1e1e1e] border border-gray-700 text-white text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none hover:border-gray-500 transition-colors"
@@ -82,13 +105,9 @@ const AdminDashboard = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <option value="all">All categories</option>
-              <option value="Pothole">Pothole</option>
-              <option value="Manhole issue">Manhole issue</option>
-              <option value="Street Light">Streetlight</option>
-              <option value="Garbage Collection">Garbage Collection</option>
-              <option value="Water Supply">Water Supply</option>
-              <option value="Drainage Problem">Drainage Problem</option>
-              <option value="Other">Other</option>
+              {filterOptions.categories.map((cat, idx) => (
+                <option key={idx} value={cat}>{cat}</option>
+              ))}
             </select>
           </div>
           <div className="flex gap-3">

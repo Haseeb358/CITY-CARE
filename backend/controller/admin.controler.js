@@ -407,4 +407,21 @@ let generateReport = async (req, res, next) => {
     }
 };
 
-export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport };
+let getFilterOptions = async (req, res, next) => {
+    try {
+        const activeCities = await City.find({ isActive: true }).select('name _id').lean();
+        const activeCategories = await ComplaintCategoryModel.find({ isActive: true }).select('name _id').lean();
+
+        res.status(200).json({
+            success: true,
+            data: {
+                cities: activeCities.map(c => c.name),
+                categories: activeCategories.map(c => c.name)
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions };
