@@ -135,12 +135,14 @@ let loginUser = async (req, res,next) => {
         }
         // find name from complainant model using user._id
         let complainant = await complainantModel.findOne({ userID: user._id });
-      
+        let employee = await employeeModel.findOne({ userID: user._id });
         let data = {
             _id: user._id,
             role: user.role,
+            roleUser: user.role == "employee" ? employee?.role : null,
             email: user.email,
             fullName: complainant?.fullName || null,
+            employeeId: employee?._id || null,
         }
         sendToken_Cookie(data, 200, res, "Login Successful");  
     } catch (error) {

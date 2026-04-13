@@ -1,8 +1,9 @@
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
-export default function ProtectedRoute() {
-    const {isAuthenticated,checkUserLoading} = useSelector((state) => state.user);
+export default function ProtectedRoute({allowedRoles}) {
+    const {isAuthenticated,checkUserLoading,user} = useSelector((state) => state.user);
+    console.log("User in ProtectedRoute: ", user);
   
   if (checkUserLoading) {
     return (
@@ -14,6 +15,9 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  if(allowedRoles && !allowedRoles.includes(user?.roleUser)){
+    return <Navigate to="/access-denied" replace />;
   }
 
   return <Outlet />;

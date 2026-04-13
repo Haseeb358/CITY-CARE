@@ -26,6 +26,16 @@ import axios from "axios";
 import ComplaintHistory from "./pages/ComplaintHistory.jsx";
 import ProtectedRoute from "./components/Auth/ProtectedRoute.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import TeamLeadHome from "./pages/TeamLeadHome.jsx";
+import AccesDenied from "./components/Auth/AccesDenied.jsx";
+import DashboardLayout from "./components/Sidebar/DashboardLayout.jsx";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome, faClipboardList,faUsers } from "@fortawesome/free-solid-svg-icons";
+import TeamLeadTeams from "./pages/TeamLeadTeams.jsx";
+import TeamLeadsComplaints from "./pages/TeamLeadsComplaints.jsx";
+import UpdateComplaint from "./pages/UpdateComplaint.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import Employess from "./pages/admin/Employess.jsx";
 
 
 function App() {
@@ -43,7 +53,7 @@ function App() {
             withCredentials: true, // Include cookies in the request
             
          });
-          console.log("Login status response: ", response.data);
+          // console.log("Login status response: ", response.data);
          if(response.data.success){
           dispatch(setUser(response.data?.user));
          }else{
@@ -86,6 +96,7 @@ function App() {
       <Route path="contact-us" element={<Contactus />} />
       <Route path="login" element={<LoginPage />} />
       <Route path="signup" element={<SignupPage />} />
+      <Route path="access-denied" element={<AccesDenied />} />
       {/* <Route path="register-complaint" element={<ComplaintPage />} /> */}
       <Route path="payment">
         <Route index element={<PaymentPage />} />
@@ -98,11 +109,41 @@ function App() {
         <Route path="register-complaint" element={<ComplaintPage />} />
         <Route path="complaint-history" element={<ComplaintHistory />} />
         <Route path="user-profile" element={<Userprofile />} />
+        
       </Route>
-      <Route path="*" element={<NotFound />} />
+      
     </Route>
-    
-    
+
+    {/* Team lead routes */}
+    <Route element={<ProtectedRoute allowedRoles={['teamLead']} />}>
+
+      <Route element={<DashboardLayout menuItems={[
+        { to: "/teamLead/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
+        { to: "/teamLead/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
+        { to: "/teamLead/team", label: "Team", icon: <FontAwesomeIcon icon={faUsers} /> },
+      ]} />}>
+        <Route path="teamLead/dashboard" element={<TeamLeadHome />} />
+        <Route path="teamLead/complaints" element={<TeamLeadsComplaints />} />
+        <Route path="teamLead/team" element={<TeamLeadTeams />} />
+        <Route path="teamLead/complaints/update/:id" element={<UpdateComplaint />} />
+      </Route>
+      
+    </Route>
+
+    {/* admin routes */}
+    <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+
+      <Route element={<DashboardLayout menuItems={[
+        { to: "/admin/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
+        { to: "/admin/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> }
+      ]} />}>
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
+        <Route path="admin/employees" element={<Employess />} />
+        
+      </Route>
+
+    </Route>
+    <Route path="*" element={<NotFound />} />
   </Routes>
   
   </BrowserRouter>

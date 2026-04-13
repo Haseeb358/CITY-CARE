@@ -54,7 +54,7 @@ export default function ComplaintHistory() {
     
 
     } catch (err) {
-      console.error(err);
+      console.error(err.response?.data || "An error occurred while fetching complaints.");
     } finally {
       setLoading(false);
     }

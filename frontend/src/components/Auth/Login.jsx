@@ -11,7 +11,7 @@ const Login = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector((state) => state.user);
+  const { loading, error, isAuthenticated,user } = useSelector((state) => state.user);
 
   const {
     register,
@@ -22,9 +22,16 @@ const Login = () => {
   const onSubmit = (data) => {
     dispatch(loginUser(data))
       .unwrap()
-      .then(() => {
-        toast.success("Login successful");
-        navigate("/");
+      .then((res) => {
+        
+        if(res?.data?.roleUser === "teamLead"){
+          navigate("/teamLead/dashboard");
+        }else if(res?.data?.roleUser === "admin"){
+          navigate("/admin/dashboard");
+        }else{
+          navigate("/");
+        }
+       toast.success(res?.message || "Login successful");
       })
       .catch((error) => {
         toast.error(error?.message || "Login failed");

@@ -12,7 +12,8 @@ let ComplaintSchema= new mongoose.Schema({
         required: true
      },
      city:{
-       type:String || mongoose.Schema.Types.ObjectId,
+       type:mongoose.Schema.Types.ObjectId,
+       ref:"City",
        required:true
      },
      zone:{
@@ -26,22 +27,28 @@ let ComplaintSchema= new mongoose.Schema({
      },
    location: {
     type: {
-    type: String,
-    enum: ["Point"],
-    default: "Point",
-  },
-  coordinates: {
-    type: [Number], // [lng, lat]
-    required: true,
-  },
-},
-     CurrentStatus:{
-        type: String,
-        enum: ["Pending", "In-Progress", "Resolved", "Rejected","Assigned","Review"],
-        default: "Pending"
+      type: String,
+      enum: ["Point"],
+      default: "Point",
     },
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+    },
+  },
+  
+  CurrentStatus: {
+    type: String,
+    enum: ["Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Review"],
+    default: "Pending"
+  },
+  
     media:[]
     ,
+    resolvedMedia:{
+      type: [Object], // Array of objects containing media details (e.g., URL, type)
+      default: []
+    },
  votes: {
   type: Number,
   default: 0,
@@ -64,7 +71,8 @@ addressDescription:{
   default: ""
 },
   
-} ,{timestamps: true});
+},{timestamps: true}
+);
 
 ComplaintSchema.index({ location: "2dsphere" });
 
