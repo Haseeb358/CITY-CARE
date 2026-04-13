@@ -27,20 +27,22 @@ let ComplaintSchema= new mongoose.Schema({
      },
    location: {
     type: {
-    type: String,
-    enum: ["Point"],
-    default: "Point",
-  },
-  coordinates: {
-    type: [Number], // [lng, lat]
-    required: true,
-  },
-},
-     CurrentStatus:{
-        type: String,
-        enum: ["Pending", "In-Progress", "Resolved", "Rejected","Assigned","Review"],
-        default: "Pending"
+      type: String,
+      enum: ["Point"],
+      default: "Point",
     },
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+    },
+  },
+  
+  CurrentStatus: {
+    type: String,
+    enum: ["Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Review"],
+    default: "Pending"
+  },
+  
     media:[]
     ,
     resolvedMedia:{
@@ -69,7 +71,8 @@ addressDescription:{
   default: ""
 },
   
-} ,{timestamps: true});
+},{timestamps: true}
+);
 
 ComplaintSchema.index({ location: "2dsphere" });
 
