@@ -71,8 +71,8 @@ const AdminDashboard = () => {
   }, [timeFilter, cityFilter, categoryFilter]);
 
   return (
-    <div className="min-h-screen bg-[#121212] w-full p-6 text-white font-sans overflow-y-auto w-full max-w-full">
-      <div className="max-w-[1400px] mx-auto w-full">
+    <div className="min-h-screen bg-[#121212]  p-6 text-white font-sans overflow-y-auto w-full max-w-full">
+      <div className="max-w-350 mx-auto w-full">
         {/* Header Title */}
         <h1 className="text-2xl font-bold mb-6 text-white tracking-wide">Complaint analytics</h1>
 
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
             {/* List and Table Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 w-full overflow-hidden">
               {/* Category List */}
-              <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-5 shadow-lg h-auto min-h-[300px]">
+              <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-5 shadow-lg h-auto min-h-75">
                 <h3 className="text-gray-200 font-bold mb-6">Complaints by category</h3>
                 <div className="pr-4">
                   <ComplaintsByCategoryList data={data.complaintAnalytics?.byCategory} />
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Team Performance Table */}
-              <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-5 shadow-lg overflow-x-auto min-h-[300px]">
+              <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-5 shadow-lg overflow-x-auto min-h-75">
                 <h3 className="text-gray-200 font-bold mb-6">Team performance</h3>
                 <TeamPerformanceTable data={data.teamPerformance?.leaderboard} />
               </div>

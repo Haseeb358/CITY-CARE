@@ -3,7 +3,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import Sidebar from "./Sidebar";
-
+import { useSelector } from "react-redux";
 // Reusable Sidebar Item
 // const SidebarItem = ({ to, icon, label }) => {
 //   return (
@@ -48,6 +48,8 @@ import Sidebar from "./Sidebar";
 
 // Layout Component (IMPORTANT)
 export default function DashboardLayout({ menuItems }) {
+  let user = useSelector((state) => state?.user);
+  console.log("User in DashboardLayout: ", user);
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
@@ -70,7 +72,12 @@ export default function DashboardLayout({ menuItems }) {
           <button onClick={toggleSidebar} className="text-xl">
             <FontAwesomeIcon icon={faBars} />
           </button>
-          <h1 className="text-lg font-semibold">Team Lead Panel</h1>
+          <h1 className="text-lg font-semibold mr-10 ">
+            {/* if user.roleUser is team Lead there should be Team Lead panel */}
+            {user?.user?.roleUser === "teamLead" && "Team Lead Panel"}
+            {user?.user?.roleUser === "admin" && "Admin Panel"}
+            {user?.user?.roleUser === "cityManager" && "City Manager Panel"}
+          </h1>
         </div>
 
         {/* Page Content */}

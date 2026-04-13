@@ -26,9 +26,12 @@ const Login = () => {
         
         if(res?.data?.roleUser === "teamLead"){
           navigate("/teamLead/dashboard");
+        }else if(res?.data?.roleUser === "admin"){
+          navigate("/admin/dashboard");
         }else{
           navigate("/");
         }
+       toast.success(res?.message || "Login successful");
       })
       .catch((error) => {
         toast.error(error?.message || "Login failed");

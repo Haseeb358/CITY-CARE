@@ -35,6 +35,7 @@ import TeamLeadTeams from "./pages/TeamLeadTeams.jsx";
 import TeamLeadsComplaints from "./pages/TeamLeadsComplaints.jsx";
 import UpdateComplaint from "./pages/UpdateComplaint.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import Employess from "./pages/admin/Employess.jsx";
 
 
 function App() {
@@ -108,7 +109,7 @@ function App() {
         <Route path="register-complaint" element={<ComplaintPage />} />
         <Route path="complaint-history" element={<ComplaintHistory />} />
         <Route path="user-profile" element={<Userprofile />} />
-        <Route path="admin/dashboard" element={<AdminDashboard />} />
+        
       </Route>
       
     </Route>
@@ -127,6 +128,20 @@ function App() {
         <Route path="teamLead/complaints/update/:id" element={<UpdateComplaint />} />
       </Route>
       
+    </Route>
+
+    {/* admin routes */}
+    <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+
+      <Route element={<DashboardLayout menuItems={[
+        { to: "/admin/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
+        { to: "/admin/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> }
+      ]} />}>
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
+        <Route path="admin/employees" element={<Employess />} />
+        
+      </Route>
+
     </Route>
     <Route path="*" element={<NotFound />} />
   </Routes>
