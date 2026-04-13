@@ -109,7 +109,6 @@ let userSlice = createSlice({
         state.user = actions.payload?.data || null;
         state.success = actions.payload?.success;
         state.isAuthenticated = true;
-        console.log("ss: ", state.isAuthenticated);
       })
       .addCase(loginUser.rejected, (state, actions) => {
         console.log("ac: ", actions);

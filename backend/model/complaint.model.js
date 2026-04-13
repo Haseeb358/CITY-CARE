@@ -12,7 +12,8 @@ let ComplaintSchema= new mongoose.Schema({
         required: true
      },
      city:{
-       type:String || mongoose.Schema.Types.ObjectId,
+       type:mongoose.Schema.Types.ObjectId,
+       ref:"City",
        required:true
      },
      zone:{
@@ -42,6 +43,10 @@ let ComplaintSchema= new mongoose.Schema({
     },
     media:[]
     ,
+    resolvedMedia:{
+      type: [Object], // Array of objects containing media details (e.g., URL, type)
+      default: []
+    },
  votes: {
   type: Number,
   default: 0,
