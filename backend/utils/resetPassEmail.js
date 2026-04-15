@@ -15,13 +15,14 @@ let transporter = nodemailer.createTransport({
 });
 
 let sendResetEmail = async (opt) => {
+
   try {
     const info = await transporter.sendMail({
       from: "citycareforyou@gmail.com",
       to: opt.to,
       subject: opt.subject,
-      template: "resetEmail",
-      text: `Hello ${opt.name},\n\nPlease click on the following link to reset your password:\n\n${opt.resetUrl}\n\nIf you did not request this, please ignore this email.\n\nThank you,\nCityCare Team`,
+      template: opt.temp,
+      text: opt.text,
 
     });
     console.log("Message sent:", info.messageId);

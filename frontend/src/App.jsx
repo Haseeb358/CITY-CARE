@@ -36,7 +36,10 @@ import TeamLeadsComplaints from "./pages/TeamLeadsComplaints.jsx";
 import UpdateComplaint from "./pages/UpdateComplaint.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import Employess from "./pages/admin/Employess.jsx";
-
+import { faMapMarkedAlt } from "@fortawesome/free-solid-svg-icons";
+import Zones from "./pages/admin/Zones.jsx";
+import EmployeesWithAccouns from "./pages/admin/EmployeesWithAccouns.jsx";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 function App() {
 
@@ -135,11 +138,15 @@ function App() {
 
       <Route element={<DashboardLayout menuItems={[
         { to: "/admin/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
-        { to: "/admin/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> }
+        { to: "/admin/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/admin/zones", label: "Zones", icon: <FontAwesomeIcon icon={faMapMarkedAlt} /> },
+        { to: "/admin/employees-accounts", label: "Accounts", icon: <FontAwesomeIcon icon={faUser} /> }
+
       ]} />}>
         <Route path="admin/dashboard" element={<AdminDashboard />} />
         <Route path="admin/employees" element={<Employess />} />
-        
+        <Route path="admin/zones" element={<Zones />} />
+        <Route path="admin/employees-accounts" element={<EmployeesWithAccouns />} />
       </Route>
 
     </Route>
