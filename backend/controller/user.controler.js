@@ -273,6 +273,8 @@ let forgotPassword = async (req, res,next) => {
             subject: "CityCare - Password Reset",
             name : user.email,
             resetUrl : resetUrl,
+            temp:"resetEmail",
+            text: `Hello ${user.email},\n\nPlease click on the following link to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.\n\nThank you,\nCityCare Team`,
         }
          await sendResetEmail(mailOptions); 
          console.log("Raw Token: ",RawToken);

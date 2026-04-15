@@ -10,8 +10,8 @@ let employeeSchema = mongoose.Schema({
         type:String,
         required:true},
     city:{
-        type:mongoose.Schema.Types.ObjectId || null,
-        ref:"city",
+        type:mongoose.Schema.Types.ObjectId ,
+        ref:"City",
         default:null,
     },
     role:{
@@ -20,7 +20,7 @@ let employeeSchema = mongoose.Schema({
         required:true,},
     zone:{
         type:mongoose.Schema.Types.ObjectId || null,
-        ref:"zone",
+        ref:"Zone",
         default:null,
     },
     skills:{

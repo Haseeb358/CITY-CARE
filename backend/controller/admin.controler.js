@@ -9,7 +9,8 @@ import teamModel from "../model/team.model.js";
 import donationModel from "../model/donation.model.js";
 import mongoose from "mongoose";
 import PDFDocument from "pdfkit";
-
+import bcrypt from "bcrypt";
+import { sendResetEmail } from "../utils/resetPassEmail.js";
 
 let createCity = async (req, res, next) => {
     try {
@@ -73,17 +74,8 @@ let createEmployeeRecord = async (req, res, next) => {
     try {
 
         const {
-            fullName,
-            city,
-            role,
-            zone,
-            skills,
-            address,
-            contactNumber,
+           
             CNIC,
-            joinedDate,
-            DOB,
-            education,
 
         } = req.body;
 
@@ -93,16 +85,10 @@ let createEmployeeRecord = async (req, res, next) => {
             error.status = 400;
             return next(error);
         }
-        let cityRecord = await City.findOne({ name: city });
-        if (!cityRecord) {
-            let error = new Error("City not found");
-            error.status = 400;
-            return next(error);
-        }
-        let newEmployee = new employeeModel({
-            fullName, city: cityRecord._id, role, zone, skills, address, contactNumber, CNIC, joinedDate, DOB, education,
-
-        })
+    
+        let newEmployee = new employeeModel(
+            req.body
+        )
         let savedEmployee = await newEmployee.save();
         res.status(201).json({
             success: true,
@@ -424,4 +410,365 @@ let getFilterOptions = async (req, res, next) => {
     }
 };
 
-export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions };
+let getEmployees = async (req, res) => {
+  let { cnic, skill, zone, city, fullName, role, page=1, limit=10 } = req.query;
+
+  let query = {};
+  console.log("filters:", { fullName, role });
+
+  if (cnic && cnic.length === 13) {
+    query.CNIC = cnic;
+  }
+
+  if (skill) {
+    query.skills = { $regex: skill, $options: "i" };
+  }
+
+  if (role) {
+    query.role = role;
+  }
+
+  if (zone) {
+    let zones = await Zone.find({
+      name: { $regex: zone, $options: "i" }
+    });
+
+    query.zone = { $in: zones.map(z => z._id) };
+  }
+  console.log("city: ",city);
+  if (city) {
+    let cities = await City.find({
+      name: { $regex: city, $options: "i" }
+    });
+
+    query.city = { $in: cities.map(c => c._id) };
+  }
+
+    if(fullName){
+    query.fullName = { $regex: fullName, $options: "i" };
+    }
+
+  let skip = (page - 1) * limit;
+ console.log("final query:", query);
+  let employees = await employeeModel
+    .find(query)
+    .populate("city", "_id name")
+    .populate("zone", "_id name")
+    .skip(skip)
+    .limit(Number(limit))
+    .sort({ "fullName": 1 });
+
+  let total = await employeeModel.countDocuments(query);
+
+  res.json({
+    employees,
+    totalPages: Math.ceil(total / limit)
+  });
+};
+
+let updateEmployee = async (req, res) => {
+  let { id } = req.params;
+  
+  let updated = await employeeModel.findByIdAndUpdate(
+    id,
+    req.body,
+    { new: true }
+  );
+  if (!updated) {
+    return res.status(404).json({ success: false, message: "Employee not found" });
+  }
+
+  res.json(updated);
+};
+let createEmployee = async (req, res) => {
+  let employee = await employeeModel.create(req.body);
+  res.json(employee);
+};
+
+let getCities = async (req, res) => {
+  const cities = await City.find().select("_id name");
+
+  res.json({ cities });
+};
+
+// GET /api/admin/zones?cityId=xxx
+let getZonesByCity = async (req, res) => {
+  const { cityId } = req.query;
+// sort the zones by name in ascending order
+  const zones = await Zone
+    .find({ city: cityId })
+    .select("_id name")
+    .sort({ name: 1 });
+
+  res.json({ zones });
+};
+
+let getZones = async (req, res) => {
+  let { name, isActive, city, page=1, limit=15 } = req.query;
+
+  let query = {};
+
+  if (name) {
+    query.name = { $regex: name, $options: "i" };
+  }
+
+  if (isActive !== "") {
+    query.isActive = isActive === "true";
+  }
+
+  if (city) {
+    query.city = city;
+  }
+
+  // 🔥 city manager restriction
+  if (req.user.roleUser === "cityManager") {
+    query.city = req.user.city;
+  }
+
+  let skip = (page - 1) * limit;
+
+  let zones = await Zone
+    .find(query)
+    .populate("city", "name")
+    .skip(skip)
+    .limit(Number(limit));
+
+  let total = await Zone.countDocuments(query);
+
+  res.json({
+    zones,
+    totalPages: Math.ceil(total / limit)
+  });
+};
+let toggleZoneStatus = async (req, res) => {
+  let { id } = req.params;
+
+  let zone = await Zone.findById(id);
+
+  zone.isActive = !zone.isActive;
+
+  await zone.save();
+
+  res.json({ success: true });
+};
+
+let uploadZonesFromGeoJSON = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const { cityId } = req.body;
+
+    // ✅ verify city exists
+    const city = await City.findById(cityId);
+    if (!city) {
+      throw new Error("Invalid city");
+    }
+
+    const geojson = JSON.parse(req.file.buffer.toString());
+
+    if (!geojson.features || !Array.isArray(geojson.features)) {
+      throw new Error("Invalid GeoJSON format");
+    }
+
+    let zones = [];
+
+    for (let i = 0; i < geojson.features.length; i++) {
+
+      const f = geojson.features[i];
+
+      // ✅ VALIDATION
+      if (!f.properties?.name) {
+        throw new Error(`Feature ${i + 1}: Missing name`);
+      }
+
+      if (!f.geometry?.type || !f.geometry?.coordinates) {
+        throw new Error(`Feature ${i + 1}: Invalid geometry`);
+      }
+
+      zones.push({
+        name: f.properties.name,
+        city: cityId,
+        geometry: f.geometry,
+        isActive: true
+      });
+    }
+
+    // ✅ insert
+    await Zone.insertMany(zones, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      success: true,
+      count: zones.length
+    });
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({
+      message: err.message
+    });
+  }
+};
+let getEmployeesWithAccounts = async (req, res) => {
+
+  let { city, role, cnic, zone,isActive, page=1, limit=10 } = req.query;
+  let query = {
+    userID: { $ne: null }
+  };
+  
+  if (city) query.city = city;
+  if (role) query.role = role;
+  if (zone) {
+    let zones = await Zone.find({
+      name: { $regex: zone, $options: "i" }
+    });
+
+    query.zone = { $in: zones.map(z => z._id) };
+  }
+   if(isActive){
+    query.isActive = isActive === "true";
+   }
+
+  if (cnic) query.CNIC = { $regex: cnic, $options: "i" };
+  console.log("final query for accounts: ", query);
+  let skip = (page - 1) * limit;
+
+
+  let employees = await employeeModel
+    .find(query)
+    .populate("userID", "email")
+    .populate("city", "name")
+    .populate("zone", "name")
+    .skip(skip)
+    .limit(Number(limit));
+
+  let total = await employeeModel.countDocuments(query);
+
+  res.json({
+    employees,
+    totalPages: Math.ceil(total / limit)
+  });
+};
+
+let updateUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  let update = { email };
+
+  if (password) {
+    update.passwordHash = await bcrypt.hash(password, 10);
+  }
+//    send email with new credentials
+  const user = await userModel.findById(req.params.id);
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  const mailOptions = {
+    to: "citycareforyou@gmail.com",
+    subject: "CityCare - Account Updated",
+    text: `Hello,\n\nYour account credentials have been updated. Here are your new credentials:\n\nEmail: ${email}\n${password ? `Password: ${password}\n\nPlease log in .\n\n` : ""}Thank you,\nCityCare Team`,
+    temp:"Login Credentials"
+};
+  await userModel.findByIdAndUpdate(req.params.id, update);
+
+  await sendResetEmail(mailOptions);
+  res.json({ success: true });
+};
+
+let toggleEmployeeStatus = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+
+  let employee = await employeeModel.findById(id);
+
+
+  employee.isActive = !employee.isActive;
+  await employee.save();
+
+  res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+let deleteUserAccount = async (req, res,next) => {
+
+    try {
+        // also change role
+        await employeeModel.findOneAndUpdate(
+            { userID: req.params.id },
+            { $set: { userID: null, role: "worker" } }
+        );
+        
+        await userModel.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+let assignCredentials = async (req, res) => {
+  try {
+    const { email, password, employeeId } = req.body;
+
+    //  check if employee exists
+    const employee = await employeeModel.findById(employeeId);
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    //  prevent duplicate account
+    if (employee.userID) {
+      return res.status(400).json({
+        message: "Employee already has credentials"
+      });
+    }
+
+    //  check email already exists
+    const existingUser = await userModel.findOne({ email });
+    
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already in use"
+      });
+    }
+
+    //  hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    //  create user
+    const user = await userModel.create({
+      email,
+      passwordHash,
+      role: "employee",
+      isVerified: true
+    });
+
+    //  link employee
+    employee.userID = user._id;
+    await employee.save();
+    //  send email with credentials
+    const mailOptions = {
+      to: "citycareforyou@gmail.com", // replace with employee.email in production
+      subject: "CityCare - Account Created",
+      text: `Hello ${employee.fullName},\n\nYour account for role ${employee?.role} has been created with the following credentials:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease log in.\n\nThank you,\nCityCare Team`,
+      temp:"Login Credentials"
+  };
+    await sendResetEmail(mailOptions);
+    res.json({ success: true });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions, getEmployees ,updateEmployee,createEmployee,getZonesByCity,getCities,getZones,toggleZoneStatus,uploadZonesFromGeoJSON,getEmployeesWithAccounts,updateUser,toggleEmployeeStatus,deleteUserAccount,assignCredentials };
