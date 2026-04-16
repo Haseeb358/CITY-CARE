@@ -11,24 +11,30 @@ import mongoose from "mongoose";
 import PDFDocument from "pdfkit";
 import bcrypt from "bcrypt";
 import { sendResetEmail } from "../utils/resetPassEmail.js";
+import Donation from "../model/donation.model.js";
+import Contact from "../model/contactUS.model.js";
+import ExcelJS from "exceljs";
+let createCity = async (req, res) => {
+  try {
+    const { name, province } = req.body;
 
-let createCity = async (req, res, next) => {
-    try {
-        const { name, province } = req.body;
+    const exists = await City.findOne({ name });
 
-        const existingCity = await City.findOne({ name: name });
-        if (existingCity) {
-            let error = new Error("City with this name already exists");
-            error.status = 400;
-            return next(error);
-        }
-        const city = new City({ name, province });
-        await city.save();
-        res.status(201).json({ success: true, message: "City created successfully", city: city });
-
-    } catch (error) {
-        next(error);
+    if (exists) {
+      return res.status(400).json({ message: "City already exists" });
     }
+
+    const city = await City.create({
+      name,
+      province,
+      isActive: false
+    });
+
+    res.json({ city });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 let complaintCategories = async (req, res, next) => {
 
@@ -486,7 +492,8 @@ let createEmployee = async (req, res) => {
 };
 
 let getCities = async (req, res) => {
-  const cities = await City.find().select("_id name");
+  // get only active cities 
+  const cities = await City.find({ isActive: true }).select("_id name");
 
   res.json({ cities });
 };
@@ -771,4 +778,180 @@ let assignCredentials = async (req, res) => {
   }
 };
 
-export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions, getEmployees ,updateEmployee,createEmployee,getZonesByCity,getCities,getZones,toggleZoneStatus,uploadZonesFromGeoJSON,getEmployeesWithAccounts,updateUser,toggleEmployeeStatus,deleteUserAccount,assignCredentials };
+let getAllCities = async (req, res) => {
+  try {
+    let { search, status } = req.query;
+
+    let query = {};
+
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    if (status !== "") {
+      query.isActive = status === "true";
+    }
+
+    let cities = await City.find(query);
+
+    res.json({ cities });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+let toggleCityStatus = async (req, res) => {
+  try {
+    const city = await City.findById(req.params.id);
+
+    city.isActive = !city.isActive;
+    await city.save();
+
+    res.json({ success: true });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+let getDonations = async (req, res) => {
+  try {
+    let { filter = "today", page = 1, limit = 10 } = req.query;
+
+    let startDate = new Date();
+
+    if (filter === "today") {
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    if (filter === "week") {
+      startDate.setDate(startDate.getDate() - 7);
+    }
+
+    if (filter === "month") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    }
+
+    if (filter === "year") {
+      startDate.setFullYear(startDate.getFullYear() - 1);
+    }
+
+    let query = {
+      donatedAt: { $gte: startDate }
+    };
+
+    let totalAmountAgg = await Donation.aggregate([
+      { $match: query },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    let totalAmount = totalAmountAgg[0]?.total || 0;
+
+    let donations = await Donation.find(query)
+      .sort({ donatedAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    let totalDocs = await Donation.countDocuments(query);
+
+    res.json({
+      donations,
+      totalAmount,
+      totalPages: Math.ceil(totalDocs / limit)
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+let getContacts = async (req, res) => {
+  try {
+    let { filter = "month", page = 1, limit = 10 } = req.query;
+
+    let startDate = new Date();
+
+    if (filter === "today") {
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    if (filter === "week") {
+      startDate.setDate(startDate.getDate() - 7);
+    }
+
+    if (filter === "month") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    }
+
+    let query = { createdAt: { $gte: startDate } };
+
+    let messages = await Contact.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    let total = await Contact.countDocuments(query);
+
+    res.json({
+      messages,
+      totalPages: Math.ceil(total / limit)
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+let exportContacts = async (req, res) => {
+  try {
+    let { filter = "month" } = req.query;
+
+    let startDate = new Date();
+
+    if (filter === "today") startDate.setHours(0,0,0,0);
+    if (filter === "week") startDate.setDate(startDate.getDate() - 7);
+    if (filter === "month") startDate.setMonth(startDate.getMonth() - 1);
+
+    let data = await Contact.find({
+      createdAt: { $gte: startDate }
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Contacts");
+
+    sheet.columns = [
+      { header: "Name", key: "name" },
+      { header: "Email", key: "email" },
+      { header: "Message", key: "message" }
+    ];
+
+    data.forEach(d => {
+      sheet.addRow({
+        name: d.name,
+        email: d.email,
+        message: d.message
+      });
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=contacts.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export { createCity, complaintCategories, getAllUsers, createEmployeeRecord, updateEmployeeRecord, deleteEmployeeRecord, getAdminAnalytics, generateReport, getFilterOptions, getEmployees ,updateEmployee,createEmployee,getZonesByCity,getCities,getZones,toggleZoneStatus,uploadZonesFromGeoJSON,getEmployeesWithAccounts,updateUser,toggleEmployeeStatus,deleteUserAccount,assignCredentials,getAllCities,toggleCityStatus,getDonations,getContacts,exportContacts };
