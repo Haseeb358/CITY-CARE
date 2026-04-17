@@ -1,6 +1,8 @@
 import Groq from "groq-sdk";
 import ComplaintModel from "../model/complaint.model.js";
 import ComplaintCategoryModel from "../model/complaint-Category.model.js";
+import UserModel from "../model/user.model.js";
+import complainantModel from "../model/complainant.model.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -8,28 +10,30 @@ dotenv.config();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const systemInstruction = `You are CityCare Assistant, an intelligent and polite NGO chatbot for the CityCare platform.
-Rules:
-1. If asked about CityCare or the NGO, summarize that it's a civic issue tracking platform where citizens can report issues like potholes, garbage, or water supply to the municipality.
-2. If asked how to submit a complaint, tell them they must first login via the platform and go to the "Register a Complaint" section.
-3. Use the tools provided to fetch active categories or track complaint status by Complaint Number (ID).
-4. Do not answer questions outside of civic issues, CityCare, or the NGO itself. Decline them gracefully.
-5. If you do not know the answer, politely ask them to check the Contact page.`;
+STRICT RULES:
+1. You MUST ALWAYS respond ONLY in the English language. If the user writes in Urdu, Roman Urdu, Hindi, Roman Hindi, or any other language, you must politely inform them that you can only understand and respond in English.
+2. If asked about CityCare or the NGO, summarize that it's a civic issue tracking platform where citizens can report issues like potholes, garbage, or water supply to the municipality.
+3. If asked how to submit a complaint, tell them they must first login via the platform and go to the "Report Complaint" section.
+4. If a user asks for their complaint status, ask them for their registered email address. Use the provided tools to lookup their pending complaints based on their email.
+5. Use the tools provided to fetch active categories or pending complaints by Email.
+6. Do not answer questions outside of civic issues, CityCare, or the NGO itself. Decline them gracefully.
+7. If you do not know the answer, politely ask them to check the Contact page.`;
 
 const tools = [
   {
     type: "function",
     function: {
-      name: "getComplaintStatus",
-      description: "Fetch the current status of a complaint by its ID/Number.",
+      name: "getPendingComplaintsByEmail",
+      description: "Look up all unresolved/pending complaints filed by a user using their email address.",
       parameters: {
         type: "object",
         properties: {
-          complaintId: {
+          email: {
             type: "string",
-            description: "The ID string of the complaint"
+            description: "The registered email address of the citizen"
           }
         },
-        required: ["complaintId"]
+        required: ["email"]
       }
     }
   },
@@ -47,13 +51,24 @@ const tools = [
 ];
 
 const availableFunctions = {
-  getComplaintStatus: async ({ complaintId }) => {
+  getPendingComplaintsByEmail: async ({ email }) => {
     try {
-      const complaint = await ComplaintModel.findById(complaintId);
-      if (!complaint) return { error: "Complaint not found. Tell user to verify the ID." };
-      return { status: complaint.CurrentStatus, category: complaint.category, address: complaint.addressDescription };
+      const user = await UserModel.findOne({ email });
+      if (!user) return { message: "No user found with that email." };
+
+      const complainant = await complainantModel.findOne({ userID: user._id });
+      if (!complainant) return { message: "User exists but has no citizen profile." };
+
+      const complaints = await ComplaintModel.find({ 
+        complainant: complainant._id, 
+        CurrentStatus: { $ne: "Resolved" } 
+      }).select("CurrentStatus _id createdAt").lean();
+
+      if (complaints.length === 0) return { message: "No pending complaints found for this email." };
+
+      return { pendingComplaints: complaints.map(c => ({ id: c._id, status: c.CurrentStatus, date: c.createdAt })) };
     } catch {
-      return { error: "Invalid complaint ID format or database error." };
+      return { error: "Database error while fetching complaints." };
     }
   },
   getCategories: async () => {
