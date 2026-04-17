@@ -34,12 +34,15 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+import chatbotRouter from './routes/chatbot.router.js';
+
 //---------------- Routes-Router would go here
 app.use("/api/user", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/complainant", complainantRouter);
 app.use("/api/city-manager", cityManagerRouter);
-app.use('/api/payment', paymentRouter)
+app.use('/api/payment', paymentRouter);
+app.use('/api/chatbot', chatbotRouter);
 app.use('/api/teamLead', teamLeadRouter)
 
 
