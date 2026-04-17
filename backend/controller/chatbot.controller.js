@@ -1,4 +1,4 @@
-import Groq from "groq-sdk";
+import { Mistral } from "@mistralai/mistralai";
 import ComplaintModel from "../model/complaint.model.js";
 import ComplaintCategoryModel from "../model/complaint-Category.model.js";
 import UserModel from "../model/user.model.js";
@@ -7,17 +7,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
 
-const systemInstruction = `You are CityCare Assistant, an intelligent and polite NGO chatbot for the CityCare platform.
-STRICT RULES:
-1. You MUST ALWAYS respond ONLY in the English language. If the user writes in Urdu, Roman Urdu, Hindi, Roman Hindi, or any other language, you must politely inform them that you can only understand and respond in English.
-2. If asked about CityCare or the NGO, summarize that it's a civic issue tracking platform where citizens can report issues like potholes, garbage, or water supply to the municipality.
-3. If asked how to submit a complaint, tell them they must first login via the platform and go to the "Report Complaint" section.
-4. If a user asks for their complaint status, ask them for their registered email address. Use the provided tools to lookup their pending complaints based on their email.
-5. Use the tools provided to fetch active categories or pending complaints by Email.
-6. Do not answer questions outside of civic issues, CityCare, or the NGO itself. Decline them gracefully.
-7. If you do not know the answer, politely ask them to check the Contact page.`;
+const systemInstruction = `You are a friendly CityCare Assistant, who greets excellently, an intelligent and polite NGO chatbot for the CityCare platform.
+EXTREME STRICTNESS RULES:
+1. EXCLUSIVELY use the English language. Immediately refuse ANY prompt written in Urdu, Hindi, Roman Urdu, or any other language, simply stating you only understand English.
+2. ABSOLUTELY DO NOT answer ANY questions that are not directly about civic issues (potholes, garbage, water supply, etc.), the CityCare NGO, or platform usage. If asked to do anything else (e.g., recite the alphabet, write code, tell jokes), say exactly: "I can only assist with CityCare and civic issues. For all other inquiries, please visit our Contact page." Do NOT fulfill the irrelevant request.
+3. If asked about CityCare or the NGO, summarize that it's a civic tracking platform for municipality issues.
+4. If asked how to submit a complaint, tell them to login and go to "Report Complaint".
+5. When a user asks for their complaint status, ask them for their registered email address. Once they provide it, use the getPendingComplaintsByEmail tool.
+6. When reading out complaint statuses, cleanly list out the Category, the Address, the structured Date Submitted, and the Current Status to the user in a bulleted list. Keep sentences concise.
+7. NEVER expose raw function strings, internal IDs, or random data to the user. Talk naturally.`;
 
 const tools = [
   {
@@ -62,11 +62,18 @@ const availableFunctions = {
       const complaints = await ComplaintModel.find({ 
         complainant: complainant._id, 
         CurrentStatus: { $ne: "Resolved" } 
-      }).select("CurrentStatus _id createdAt").lean();
+      }).select("CurrentStatus category addressDescription createdAt").lean();
 
       if (complaints.length === 0) return { message: "No pending complaints found for this email." };
 
-      return { pendingComplaints: complaints.map(c => ({ id: c._id, status: c.CurrentStatus, date: c.createdAt })) };
+      return { 
+        pendingComplaints: complaints.map(c => ({ 
+          category: c.category, 
+          status: c.CurrentStatus, 
+          address: c.addressDescription,
+          dateSubmitted: new Date(c.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        })) 
+      };
     } catch {
       return { error: "Database error while fetching complaints." };
     }
@@ -86,6 +93,7 @@ export const chatWithBot = async (req, res, next) => {
     const { message, history } = req.body;
     if (!message) return res.status(400).json({ success: false, message: "Message is required" });
 
+    // The frontend sends an array formatted nicely for roles
     const formattedHistory = Array.isArray(history) ? history : [];
 
     const messages = [
@@ -94,23 +102,26 @@ export const chatWithBot = async (req, res, next) => {
       { role: "user", content: message }
     ];
 
-    let completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+    let completion = await client.chat.complete({
+      model: "mistral-small-latest",
       messages: messages,
       tools: tools,
-      tool_choice: "auto"
     });
 
     let choice = completion.choices[0].message;
-    let toolCalls = choice.tool_calls;
+    let toolCalls = choice.toolCalls || choice.tool_calls; // Standardizing across SDK versions
 
-    // Handle native function calling if Groq requests data
-    if (toolCalls) {
+    // Intercept Mistral requesting function/database queries
+    if (toolCalls && toolCalls.length > 0) {
       messages.push(choice);
       
       for (const toolCall of toolCalls) {
         const functionName = toolCall.function.name;
-        const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+        
+        const rawArgs = toolCall.function.arguments;
+        // Handling both plain object formats and JSON string schemas from SDK variations
+        const functionArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs || '{}') : rawArgs;
+        
         let functionResponse;
 
         if (availableFunctions[functionName]) {
@@ -119,17 +130,18 @@ export const chatWithBot = async (req, res, next) => {
           functionResponse = { error: `Function ${functionName} not found` };
         }
 
+        // Mistral expects the toolCallId specifically structured
         messages.push({
-          tool_call_id: toolCall.id,
+          toolCallId: toolCall.id,
           role: "tool",
           name: functionName,
           content: JSON.stringify(functionResponse),
         });
       }
 
-      // Execute a second generation including the fetched tool query results
-      completion = await groq.chat.completions.create({
-        model: "llama-3.1-8b-instant",
+      // Final pass to Mistral to formulate strings around the returned backend data
+      completion = await client.chat.complete({
+        model: "mistral-small-latest",
         messages: messages,
       });
 
