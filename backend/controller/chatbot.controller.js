@@ -1,11 +1,11 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import ComplaintModel from "../model/complaint.model.js";
 import ComplaintCategoryModel from "../model/complaint-Category.model.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const systemInstruction = `You are CityCare Assistant, an intelligent and polite NGO chatbot for the CityCare platform.
 Rules:
@@ -17,34 +17,36 @@ Rules:
 
 const tools = [
   {
-    functionDeclarations: [
-      {
-        name: "getComplaintStatus",
-        description: "Fetch the current status of a complaint by its ID/Number.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            complaintId: {
-              type: "STRING",
-              description: "The ID string of the complaint"
-            }
-          },
-          required: ["complaintId"]
-        }
-      },
-      {
-        name: "getCategories",
-        description: "Fetch the list of currently active complaint categories the user can select from.",
-        parameters: {
-          type: "OBJECT",
-          properties: {}
-        }
+    type: "function",
+    function: {
+      name: "getComplaintStatus",
+      description: "Fetch the current status of a complaint by its ID/Number.",
+      parameters: {
+        type: "object",
+        properties: {
+          complaintId: {
+            type: "string",
+            description: "The ID string of the complaint"
+          }
+        },
+        required: ["complaintId"]
       }
-    ]
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "getCategories",
+      description: "Fetch the list of currently active complaint categories the user can select from.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
   }
 ];
 
-const functions = {
+const availableFunctions = {
   getComplaintStatus: async ({ complaintId }) => {
     try {
       const complaint = await ComplaintModel.findById(complaintId);
@@ -71,46 +73,60 @@ export const chatWithBot = async (req, res, next) => {
 
     const formattedHistory = Array.isArray(history) ? history : [];
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      systemInstruction: { parts: [{ text: systemInstruction }] },
-      tools: tools
+    const messages = [
+      { role: "system", content: systemInstruction },
+      ...formattedHistory,
+      { role: "user", content: message }
+    ];
+
+    let completion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: messages,
+      tools: tools,
+      tool_choice: "auto"
     });
 
-    const chat = model.startChat({ history: formattedHistory });
+    let choice = completion.choices[0].message;
+    let toolCalls = choice.tool_calls;
 
-    let result = await chat.sendMessage(message);
+    // Handle native function calling if Groq requests data
+    if (toolCalls) {
+      messages.push(choice);
+      
+      for (const toolCall of toolCalls) {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+        let functionResponse;
 
-    // Some versions expose functionCalls directly, others via method
-    const calls = typeof result.response.functionCalls === 'function' ? result.response.functionCalls() : result.response.functionCalls;
-    const call = calls && calls[0];
+        if (availableFunctions[functionName]) {
+          functionResponse = await availableFunctions[functionName](functionArgs);
+        } else {
+          functionResponse = { error: `Function ${functionName} not found` };
+        }
 
-    if (call) {
-      const functionName = call.name;
-      const args = call.args;
-
-      const functionToCall = functions[functionName];
-      let apiResponse;
-      if (functionToCall) {
-        apiResponse = await functionToCall(args);
-      } else {
-        apiResponse = { error: `Function ${functionName} not found` };
+        messages.push({
+          tool_call_id: toolCall.id,
+          role: "tool",
+          name: functionName,
+          content: JSON.stringify(functionResponse),
+        });
       }
 
-      result = await chat.sendMessage([{
-        functionResponse: {
-          name: functionName,
-          response: apiResponse
-        }
-      }]);
+      // Execute a second generation including the fetched tool query results
+      completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: messages,
+      });
+
+      choice = completion.choices[0].message;
     }
 
-    const responseText = result.response.text();
+    const responseText = choice.content;
 
     const newHistory = [
       ...formattedHistory,
-      { role: "user", parts: [{ text: message }] },
-      { role: "model", parts: [{ text: responseText }] }
+      { role: "user", content: message },
+      { role: "assistant", content: responseText }
     ];
 
     res.status(200).json({ success: true, reply: responseText, updatedHistory: newHistory });
