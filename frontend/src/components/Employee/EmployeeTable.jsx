@@ -5,7 +5,7 @@ const EmployeeTable = ({ employees, user , setEmployees,refreshEmployees}) => {
   const [selected, setSelected] = useState(null);
   const [mode, setMode] = useState("view");
   const [assignModal, setAssignModal] = useState(null);
-  console.log("EmployeeTable Props:", { employees});
+  
   return (
     <div className="overflow-x-auto mt-4 bg-white rounded-xl shadow">
 
@@ -19,7 +19,9 @@ const EmployeeTable = ({ employees, user , setEmployees,refreshEmployees}) => {
             <th className="px-4 py-3">Zone</th>
             <th className="px-4 py-3">Roles</th>
             <th className="px-4 py-3 text-center">Actions</th>
-            <th className="px-4 py-3 text-center">Logins</th>
+            {user?.roleUser === "admin" && (
+              <th className="px-4 py-3 text-center">Login</th>
+            )}
           </tr>
         </thead>
 
@@ -74,7 +76,8 @@ const EmployeeTable = ({ employees, user , setEmployees,refreshEmployees}) => {
                 </div>
               </td>
               <td className="px-4 py-3 text-center">
-  {!emp.userID && emp.role !== "worker" ? (
+  {user?.roleUser === "admin" && ( <div>
+    {!emp.userID && emp.role !== "worker" ? (
     <button
       onClick={() => setAssignModal(emp)}
       className="text-green-600 font-medium hover:underline cursor-pointer"
@@ -87,6 +90,7 @@ const EmployeeTable = ({ employees, user , setEmployees,refreshEmployees}) => {
       {emp.role !== "worker" ? "Already Assigned" : "N/A"}
     </span>
   )}
+   </div>)}
 </td>
 
             </tr>

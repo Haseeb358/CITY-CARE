@@ -104,8 +104,8 @@ const CreateEmployeeModal = ({ onClose, onCreated }) => {
       console.log("Create Response:", res.data);
       onCreated && onCreated(res.data);
 
-      reset();
-      onClose();
+      // reset();
+      // onClose();
       setLoading(false);
 
     } catch (err) {

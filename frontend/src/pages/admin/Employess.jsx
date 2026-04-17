@@ -16,7 +16,7 @@ const Employees = () => {
     cnic: "",
     skill: "",
     zone: "",
-    city: "",
+    city: user?.roleUser === "cityManager" && user?.emCity ? user.emCity : "",
     role: "",
     fullName: "",
   };
@@ -44,7 +44,7 @@ const Employees = () => {
         },
         withCredentials: true
       });
-      console.log("data:",data);
+     
       setLoading(false)
       setEmployees(data.employees);
       setTotalPages(data.totalPages);

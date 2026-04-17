@@ -58,7 +58,7 @@ let createComplaint = async (req, res, next) => {
         },
       },
     });
-
+   console.log("Auto-detected zone: ", theZone);
    let outOfServiceZone = false;
     if (!theZone) {//-----------TODO
       

@@ -3,14 +3,12 @@ import React,{useEffect,useState} from "react";
 let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
 import useGetCities from "../../hooks/useGetCities";
-// import useGetCityForCityManger from "../../hooks/useGetCityForCityManger";
+
 const EmployeeFilters = ({ filters, setFilters, resetFilters, user }) => {
-   console.log("EmployeeFilters - user:", user);
   const [DropDowncities, setDropDowncities] = useState([]);
   let [cityManagerCity, setCityManagerCity] = useState(null);
   const cities = useGetCities();
-  // const city = useGetCityForCityManger(user?._id);
-
+  
   useEffect(() => {
     setDropDowncities(cities);
     
@@ -94,7 +92,17 @@ const EmployeeFilters = ({ filters, setFilters, resetFilters, user }) => {
       </select>
       )}
         {/* give dropdown */}
-      
+      {(user?.roleUser === "cityManager" && user?.emCity) && (
+        <select
+        name="city"
+        value={filters.city}
+        onChange={handleChange}
+        className="p-2 border rounded"
+      >
+        
+        <option value={user.emCity}>{user.emCity}</option>
+      </select>
+      )}
   
       {/* RESET */}
       <button

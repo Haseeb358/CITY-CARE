@@ -47,6 +47,8 @@ import AllContactUs from "./pages/admin/ContactUs.jsx";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import CityDashboard from "./pages/CityManager/CityDashboard.jsx";
+import ComplaintsCM from "./pages/CityManager/Complaints.jsx";
+import Teams from "./pages/CityManager/Teams.jsx";
 function App() {
 
 
@@ -168,9 +170,14 @@ function App() {
       <Route element={<DashboardLayout menuItems={[
         { to: "/cityManager/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
         { to: "/cityManager/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/cityManager/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
+        { to: "/cityManager/teams", label: "Teams", icon: <FontAwesomeIcon icon={faUsers} /> },
       ]} />}>
         <Route path="cityManager/dashboard" element={<CityDashboard />} />
         <Route path="cityManager/employees" element={<Employess />} />
+        <Route path="cityManager/complaints" element={<ComplaintsCM />} />
+        <Route path="cityManager/teams" element={<Teams />} />
+
       </Route>
       
     </Route>
