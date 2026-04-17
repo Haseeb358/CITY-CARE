@@ -24,7 +24,7 @@ export default function ChatbotWidget() {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!inputValue.trim()) return;
+    if (isLoading || !inputValue.trim()) return;
 
     const userText = inputValue;
     setInputValue("");
@@ -112,7 +112,7 @@ export default function ChatbotWidget() {
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask me anything..." 
               className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
-              disabled={isLoading}
+              readOnly={isLoading}
             />
             <button 
               type="submit"
