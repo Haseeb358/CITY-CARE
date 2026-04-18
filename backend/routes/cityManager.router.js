@@ -1,7 +1,7 @@
 import express from "express";
 import { authorizeRoles } from "../middleware/verifyRole.js";
 import authenticateUser from "../middleware/verifyJWT.js";
-import { createTeam ,getTeams,getCMComplaints, getComplaintHistory,getALLTeams,getNearbyZones, getTeamsByZone, assignTeam,getTeamsForCityManager,getEligibleEmployees , createNewTeam,getZonesForCity, updateTeam} from "../controller/cityManager.controler.js";
+import { createTeam ,getTeams,getCMComplaints, getComplaintHistory,getALLTeams,getNearbyZones, getTeamsByZone, assignTeam,getTeamsForCityManager,getEligibleEmployees , createNewTeam,getZonesForCity, updateTeam,updateComplaintStatus} from "../controller/cityManager.controler.js";
 
 let router = express.Router();
 
@@ -21,4 +21,5 @@ router.get("/employees/eligible", authenticateUser, authorizeRoles("cityManager"
 router.post("/createTeam", authenticateUser, authorizeRoles("cityManager"), createNewTeam);
 router.get("/teamzones", authenticateUser, authorizeRoles("cityManager"), getZonesForCity);
 router.put("/teams/:id", authenticateUser, authorizeRoles("cityManager"), updateTeam);
+router.put("/complaints/:id/update-status", authenticateUser, authorizeRoles("cityManager"), updateComplaintStatus);
 export default router;

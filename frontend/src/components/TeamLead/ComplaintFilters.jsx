@@ -63,13 +63,13 @@ const ComplaintFilters = ({
             </option>
           ))}
         </select>
-
-        {/* ZONE SEARCH */}
+ 
+        {/* CATEGORY SEARCH */}
         <input
           type="text"
-          name="zoneSearch"
-          placeholder="Search by zone..."
-          value={filters.zoneSearch}
+          name="category"
+          placeholder="Search by category..."
+          value={filters.category}
           onChange={handleChange}
           className="p-2 border rounded md:col-span-3"
         />

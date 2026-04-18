@@ -1,4 +1,4 @@
-const CMTable = ({ complaints, onViewHistory,onAssignTeam }) => {
+const CMTable = ({  complaints, onViewHistory, onAssignTeam, onUpdateStatus  }) => {
 
   return (
     <div className="bg-white rounded shadow overflow-hidden">
@@ -45,9 +45,12 @@ const CMTable = ({ complaints, onViewHistory,onAssignTeam }) => {
                   History
                 </button>
 
-                <button className="text-green-600">
-                  Update
-                </button>
+               <button
+  onClick={() => onUpdateStatus(c)}
+  className="text-green-600"
+>
+  Update
+</button>
 
               </td>
 

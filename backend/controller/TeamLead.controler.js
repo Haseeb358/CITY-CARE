@@ -36,113 +36,6 @@ let getTeamsForTeamLead = async (req, res,next) => {
 
 }
 
-// new we get the teams for the team lead and then we will get the complaints for those teams in the next step.
-
-// let getComplaintsForTeamLead = async (req, res,next) => {
-//     try {
-        
-//         let teamLeadId = req.user?.employeeId;
-//         let teams = await teamModel.find({ leader: teamLeadId }).select("_id");
-//         let teamIds = teams.map(team => team._id);
-
-//         let complaints = await complaintModel.find({ assignedTeam: { $in: teamIds } })
-//         .populate("assignedTeam", "name")
-//         .populate("city", "name")
-//         .populate("zone", "name");
-
-//         res.status(200).json({
-
-//             success: true,
-//             complaints: complaints
-//         });
-           
-        
-
-//     } catch (error) {
-//         next(error);
-//     }
-// }
-
-// let getComplaintsForTeamLead = async (req, res, next) => {
-//   try {
-//     let teamLeadId = req.user?.employeeId;
-
-//     let { 
-//       status, 
-//       team, 
-//       dateFilter, 
-//       page = 1, 
-//       limit = 10 
-//     } = req.query;
-
-//     let teams = await teamModel.find({ leader: teamLeadId }).select("_id name");
-
-//     let teamIds = teams.map(t => t._id);
-
-//     let query = {
-//       assignedTeam: { $in: teamIds }
-//     };
-
-//     // ✅ STATUS FILTER
-//     if (status) {
-//       query.CurrentStatus = status;
-//     }
-
-//     // ✅ TEAM FILTER
-//     if (team) {
-//       query.assignedTeam = team;
-//     }
-
-//     // ✅ DATE FILTER
-//     if (dateFilter) {
-//       let now = new Date();
-//       let startDate;
-
-//       if (dateFilter === "today") {
-//         startDate = new Date(now.setHours(0, 0, 0, 0));
-//       } 
-//       else if (dateFilter === "yesterday") {
-//         startDate = new Date(now.setDate(now.getDate() - 1));
-//         startDate.setHours(0, 0, 0, 0);
-//       } 
-//       else if (dateFilter === "week") {
-//         startDate = new Date(now.setDate(now.getDate() - 7));
-//       } 
-//       else if (dateFilter === "month") {
-//         startDate = new Date(now.setMonth(now.getMonth() - 1));
-//       }
-
-//       if (startDate) {
-//         query.createdAt = { $gte: startDate };
-//       }
-//     }
-
-//     // ✅ PAGINATION
-//     let skip = (page - 1) * limit;
-
-//     let complaints = await complaintModel
-//       .find(query)
-//       .populate("assignedTeam", "name")
-//       .populate("zone", "name")
-//       .populate("city", "name")
-//       .sort({ createdAt: -1 })
-//       .skip(skip)
-//       .limit(Number(limit));
-
-//     let total = await complaintModel.countDocuments(query);
-
-//     res.status(200).json({
-//       success: true,
-//       complaints,
-//       total,
-//       page: Number(page),
-//       totalPages: Math.ceil(total / limit)
-//     });
-
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 let getComplaintsForTeamLead = async (req, res, next) => {
   try {
     let teamLeadId = req.user?.employeeId;
@@ -151,11 +44,11 @@ let getComplaintsForTeamLead = async (req, res, next) => {
       status, 
       team, 
       dateFilter, 
-      zoneSearch,   // 🔥 NEW
+      category,   // 🔥 NEW
       page = 1, 
       limit = 10 
     } = req.query;
-
+   
     // ✅ Get teams under team lead
     let teams = await teamModel.find({ leader: teamLeadId }).select("_id city");
 
@@ -214,27 +107,10 @@ let getComplaintsForTeamLead = async (req, res, next) => {
 
     //   query.zone = { $in: zoneIds };
     // }
-    console.log("Zone search term: ", zoneSearch);
-    if (zoneSearch ) {
-  let zones = await zoneModel.find({
-    name: { $regex: `^${zoneSearch}`, $options: "i" }
-  }).select("_id");
-
-  let zoneIds = zones.map(z => z._id);
-
-  if (zoneIds.length === 0) {
-    return res.status(200).json({
-      success: true,
-      complaints: [],
-      total: 0,
-      page: 1,
-      totalPages: 0
-    });
-  }
-
-  query.zone = { $in: zoneIds };
-}
-
+    if (category) {
+      //  forget zone thing we seaech by category in complaint model
+      query.category = { $regex: category, $options: "i" };
+    }
     // ✅ PAGINATION
     let skip = (page - 1) * limit;
 
@@ -338,4 +214,173 @@ let updateComplaintStatus = async (req, res, next) => {
 
 };
 
-export { getTeamsForTeamLead, getComplaintsForTeamLead, getComplaintWithHistory,updateComplaintStatus };    
+const getTeamIds = async (teamLeadId) => {
+  const teams = await teamModel.find({ leader: teamLeadId }).select("_id");
+  return teams.map(t => t._id);
+};
+
+// ✅ DASHBOARD SUMMARY
+ const getDashboardSummary = async (req, res) => {
+  try {
+    const teamIds = await getTeamIds(req.user.employeeId);
+
+    if (teamIds.length === 0) {
+      return res.json({
+        total: 0,
+        stats: [],
+        avgResolutionTime: 0,
+        categoryStats: []
+      });
+    }
+
+    const match = {
+      assignedTeam: { $in: teamIds },
+      outOfServiceZone: false
+    };
+
+    // Status stats
+    const stats = await complaintModel.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$CurrentStatus",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Total
+    const total = await complaintModel.countDocuments(match);
+
+    // Avg resolution time
+    const resolved = await complaintModel.aggregate([
+      {
+        $match: { ...match, CurrentStatus: "Resolved" }
+      },
+      {
+        $project: {
+          time: { $subtract: ["$updatedAt", "$createdAt"] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgTime: { $avg: "$time" }
+        }
+      }
+    ]);
+
+    // Category breakdown
+    const categoryStats = await complaintModel.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      total,
+      stats,
+      avgResolutionTime: resolved[0]?.avgTime || 0,
+      categoryStats
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ TEAM PERFORMANCE
+ const getTeamPerformance = async (req, res) => {
+  try {
+    const teamIds = await getTeamIds(req.user.employeeId);
+
+    const data = await complaintModel.aggregate([
+      {
+        $match: {
+          assignedTeam: { $in: teamIds },
+          outOfServiceZone: false
+        }
+      },
+      {
+        $group: {
+          _id: "$assignedTeam",
+          total: { $sum: 1 },
+          resolved: {
+            $sum: {
+              $cond: [{ $eq: ["$CurrentStatus", "Resolved"] }, 1, 0]
+            }
+          },
+          pending: {
+            $sum: {
+              $cond: [{ $ne: ["$CurrentStatus", "Resolved"] }, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "_id",
+          foreignField: "_id",
+          as: "team"
+        }
+      },
+      { $unwind: "$team" },
+      {
+        $project: {
+          teamName: "$team.name",
+          total: 1,
+          resolved: 1,
+          pending: 1
+        }
+      }
+    ]);
+
+    res.json(data);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ TREND (DATE-WISE)
+const getComplaintTrend = async (req, res) => {
+  try {
+    const teamIds = await getTeamIds(req.user.employeeId);
+
+    const data = await complaintModel.aggregate([
+      {
+        $match: {
+          assignedTeam: { $in: teamIds },
+          outOfServiceZone: false
+        }
+      },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$createdAt"
+              }
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.date": 1 } }
+    ]);
+
+    res.json(data);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+ 
+
+export { getTeamsForTeamLead, getComplaintsForTeamLead, getComplaintWithHistory,updateComplaintStatus, getTeamPerformance, getComplaintTrend, getDashboardSummary };    

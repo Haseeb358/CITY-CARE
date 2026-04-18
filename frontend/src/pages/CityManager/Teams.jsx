@@ -7,7 +7,7 @@ import TeamTable from "../../components/Teams/TeamTable";
 import TeamModal from "../../components/Teams/TeamModal";
 import Pagination from "../../components/TeamLead/Pagination";
 import Loader from "../../components/utilities/Loader";
-
+import UpdateTeamModal from "../../components/Teams/UpdateTeamModal";
 let API_URL = import.meta.env.VITE_API_URL;
 let ROUTE = import.meta.env.VITE_API_CITY_MANAGER_ROUTE;
 
@@ -90,13 +90,26 @@ const Teams = () => {
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} />
 
-      {selected && (
-        <TeamModal
-          team={selected}
-          mode={mode}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      {/* VIEW MODAL */}
+{selected && mode === "view" && (
+  <TeamModal
+    team={selected}
+    mode="view"
+    onClose={() => setSelected(null)}
+  />
+)}
+
+{/* UPDATE MODAL */}
+{selected && mode === "update" && (
+  <UpdateTeamModal
+    team={selected}
+    onClose={() => setSelected(null)}
+    city={user?.emCity}
+    onUpdated={fetchTeams}   // 🔥 refresh UI
+  />
+)}
+
+
       {showCreate && (
   <CreateTeamModal
     onClose={() => setShowCreate(false)}

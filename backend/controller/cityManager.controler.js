@@ -84,35 +84,75 @@ let getCMComplaints = async (req, res) => {
       date,
       page = 1,
       limit = 10,
-      city
+      city,
+      status
     } = req.query;
 
-    let query = { city };
+    console.log("getCMComplaints zone: ", zone);
 
-    if (category) query.category = { $regex: category, $options: "i" };
+    let query = {};
 
-    if (zone) query["zone.name"] = { $regex: zone, $options: "i" };
+    // ✅ CATEGORY
+    if (category) {
+      query.category = { $regex: category, $options: "i" };
+    }
 
+    // ✅ CITY (convert name → _id)
+    if (city) {
+      const cityDoc = await cityModel.findOne({ name: city }).select("_id");
+      if (cityDoc) {
+        query.city = cityDoc._id;
+      }
+    }
+
+    // ✅ ZONE FIX (MAIN FIX 🔥)
+    if (zone) {
+      const zoneDoc = await zoneModel.findOne({
+        name: { $regex: zone, $options: "i" }
+      }).select("_id");
+
+      if (zoneDoc) {
+        query.zone = zoneDoc._id;
+      } else {
+        // No zone found → return empty result
+        return res.json({ complaints: [], totalPages: 0 });
+      }
+    }
+
+    // ✅ TEAM
     if (team) query.assignedTeam = team;
 
     if (unassigned === "true") query.assignedTeam = null;
 
-    if (outOfService !== "")
+    // ✅ OUT OF SERVICE
+    if (outOfService !== "") {
       query.outOfServiceZone = outOfService === "true";
-
-    // DATE FILTER
-    let startDate = new Date();
-    if (date === "today") startDate.setHours(0,0,0,0);
-    if (date === "yesterday") {
-      startDate.setDate(startDate.getDate() - 1);
     }
-    if (date === "week") startDate.setDate(startDate.getDate() - 7);
-    if (date === "month") startDate.setMonth(startDate.getMonth() - 1);
 
-    query.createdAt = { $gte: startDate };
+    // ✅ DATE FILTER
+    if (date) {
+      let startDate = new Date();
 
-    let cityId = await cityModel.findOne({ name: city }).select("_id");
-    query.city = cityId;
+      if (date === "today") startDate.setHours(0, 0, 0, 0);
+
+      if (date === "yesterday") {
+        startDate.setDate(startDate.getDate() - 1);
+        startDate.setHours(0, 0, 0, 0);
+      }
+
+      if (date === "week") startDate.setDate(startDate.getDate() - 7);
+
+      if (date === "month") startDate.setMonth(startDate.getMonth() - 1);
+
+      query.createdAt = { $gte: startDate };
+    }
+    if(status){
+      query.CurrentStatus = status;
+    }
+
+    // ✅ PAGINATION
+    page = Number(page);
+    limit = Number(limit);
 
     let complaints = await Complaint.find(query)
       .populate("zone", "name")
@@ -553,4 +593,42 @@ const updateTeam = async (req, res) => {
   }
 };
 
-export { createTeam, getTeams, getCMComplaints, getComplaintHistory, getALLTeams, getNearbyZones, getTeamsByZone, assignTeam, getTeamsForCityManager, getEligibleEmployees , createNewTeam, getZonesForCity,  updateTeam};
+const updateComplaintStatus = async (req, res, next) => {
+  try {
+    const { status, remarks } = req.body;
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    const oldStatus = complaint.CurrentStatus;
+
+    // ❌ prevent same status update
+    if (oldStatus === status) {
+      return res.status(400).json({ message: "Status is already same" });
+    }
+
+    // ✅ update complaint
+    complaint.CurrentStatus = status;
+    await complaint.save();
+
+    // ✅ add history
+    await ComplaintHistory.create({
+      complaint: complaint._id,
+      actionType: "REASSIGNED",
+      oldStatus,
+      newStatus: status,
+      remarks,
+      actedBy: req.user?.employeeId || null
+    });
+
+    res.json({ message: "Status updated successfully" });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { createTeam, getTeams, getCMComplaints, getComplaintHistory, getALLTeams, getNearbyZones, getTeamsByZone, assignTeam, getTeamsForCityManager, getEligibleEmployees , createNewTeam, getZonesForCity,  updateTeam, updateComplaintStatus};

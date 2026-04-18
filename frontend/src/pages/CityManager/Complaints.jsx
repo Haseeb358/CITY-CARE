@@ -8,8 +8,8 @@ import ComplaintHistoryModal from "../../components/CityManager/ComplaintHistory
 import AssignTeamModal from "../../components/CityManager/AssignTeamModal";
 import Pagination from "../../components/TeamLead/Pagination";
 import Loader from "../../components/utilities/Loader";
-
-let API_URL = import.meta.env.VITE_API_URL;
+import UpdateStatusModal from "../../components/CityManager/UpdateStatusModal";
+let API_URL = import.meta.env.VITE_API_URL; 
 let ROUTE = import.meta.env.VITE_API_CITY_MANAGER_ROUTE;
 
 const Complaints = () => {
@@ -22,7 +22,8 @@ const Complaints = () => {
     team: "",
     unassigned: false,
     outOfService: "",
-    date: "month"
+    date: "month",
+    status: ""
   });
 
   const [debounced, setDebounced] = useState(filters);
@@ -32,6 +33,7 @@ const Complaints = () => {
   const [loading, setLoading] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState({});
   const [selectedAssign, setSelectedAssign] = useState(null);
+  const [selectedUpdate, setSelectedUpdate] = useState(null);
   // ✅ debounce
   useEffect(() => {
     const t = setTimeout(() => {
@@ -79,7 +81,8 @@ const Complaints = () => {
       <CMTable
         complaints={complaints}
         onViewHistory={setSelectedHistory}
-        onAssignTeam={setSelectedAssign} 
+        onAssignTeam={setSelectedAssign}
+        onUpdateStatus={setSelectedUpdate}
       />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} />
@@ -97,6 +100,13 @@ const Complaints = () => {
           refresh={fetchComplaints}   // ✅ auto refresh after assign
         />
       )}
+      {selectedUpdate && (
+  <UpdateStatusModal
+    complaint={selectedUpdate}
+    onClose={() => setSelectedUpdate(null)}
+    refresh={fetchComplaints}
+  />
+)}
 
     </div>
   );

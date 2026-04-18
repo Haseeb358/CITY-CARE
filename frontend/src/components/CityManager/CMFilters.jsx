@@ -61,6 +61,7 @@ const CMFilters = ({ filters, setFilters}) => {
       </select>
 
       <select
+      className="border"
         value={filters.outOfService}
         onChange={(e) =>
           setFilters(p => ({ ...p, outOfService: e.target.value }))
@@ -72,6 +73,7 @@ const CMFilters = ({ filters, setFilters}) => {
       </select>
 
       <select
+      className="border"
         value={filters.date}
         onChange={(e) =>
           setFilters(p => ({ ...p, date: e.target.value }))
@@ -81,6 +83,22 @@ const CMFilters = ({ filters, setFilters}) => {
         <option value="yesterday">Yesterday</option>
         <option value="week">Week</option>
         <option value="month">Month</option>
+      </select>
+      {/* Drop down for CurrentStatus : "Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Review"*/}
+      <select
+      className="border"
+        value={filters.status}
+        onChange={(e) =>
+          setFilters(p => ({ ...p, status: e.target.value }))
+        }
+      >
+        <option value="">All Statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="In-Progress">In-Progress</option>
+        <option value="Resolved">Resolved</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Assigned">Assigned</option>
+        <option value="Reassigned">Reassigned</option>
       </select>
 
       <label className="flex items-center gap-2">

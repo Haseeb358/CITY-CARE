@@ -12,9 +12,9 @@ router.get("/get-all-users", authenticateUser,authorizeRoles("admin"),  getAllUs
 router.post("/create-employee",authenticateUser,authorizeRoles("admin"), createEmployeeRecord);
 router.put("/update-employee/:id",authenticateUser,authorizeRoles("admin"), updateEmployeeRecord);
 router.delete("/delete-employee/:id", authenticateUser, authorizeRoles("admin"), deleteEmployeeRecord);
-router.get("/analytics", authenticateUser, authorizeRoles("admin"), getAdminAnalytics);
-router.get("/generate-report", authenticateUser, authorizeRoles("admin"), generateReport);
-router.get("/filter-options", authenticateUser, authorizeRoles("admin"), getFilterOptions);
+router.get("/analytics", authenticateUser, authorizeRoles("admin", "cityManager"), getAdminAnalytics);
+router.get("/generate-report", authenticateUser, authorizeRoles("admin", "cityManager"), generateReport);
+router.get("/filter-options", authenticateUser, authorizeRoles("admin", "cityManager"), getFilterOptions);
 router.get("/employees",authenticateUser, authorizeRoles("admin", "cityManager"),getEmployees)
 router.put("/employees/:id",authenticateUser, authorizeRoles("admin", "cityManager"),updateEmployee)
 router.post("/employees",authenticateUser, authorizeRoles("admin"),createEmployee)
