@@ -6,6 +6,7 @@ import cityModel from "../model/city.model.js";
 import Complaint from "../model/complaint.model.js";
 import mongoose from "mongoose";
 import ComplaintHistory from "../model/complaint-history.model.js";
+import Request  from "../model/requests.model.js";
 let createTeam = async (req, res, next) => {
 
     try {
@@ -631,4 +632,92 @@ const updateComplaintStatus = async (req, res, next) => {
   }
 };
 
-export { createTeam, getTeams, getCMComplaints, getComplaintHistory, getALLTeams, getNearbyZones, getTeamsByZone, assignTeam, getTeamsForCityManager, getEligibleEmployees , createNewTeam, getZonesForCity,  updateTeam, updateComplaintStatus};
+const updateTLRequestStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, remarks } = req.body;
+
+    if (!["Accepted", "Rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const request = await Request.findById(id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    // 🔒 SECURITY: Only assigned city manager can update
+    if (request.toCityManager.toString() !== req.user.employeeId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // ❗ Prevent updating again
+    if (request.status !== "Sent") {
+      return res.status(400).json({ message: "Already processed" });
+    }
+
+    request.status = status;
+    request.remarks = remarks || "";
+
+    await request.save();
+
+    res.json({ message: "Updated successfully", request });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+const getCityManagerRequests = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      startDate,
+      endDate
+    } = req.query;
+
+    const filter = {
+      toCityManager: req.user.employeeId
+    };
+
+    // ✅ Status filter
+    if (status) {
+      filter.status = status;
+    }
+
+    // ✅ Date filter
+    if (startDate || endDate) {
+      filter.createdAt = {};
+
+      if (startDate) {
+        filter.createdAt.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        filter.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+      }
+    }
+
+    const requests = await Request.find(filter)
+      .populate("fromTeamLead", "fullName")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Request.countDocuments(filter);
+
+    res.json({
+      requests,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / limit)
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export { createTeam, getTeams, getCMComplaints, getComplaintHistory, getALLTeams, getNearbyZones, getTeamsByZone, assignTeam, getTeamsForCityManager, getEligibleEmployees , createNewTeam, getZonesForCity,  updateTeam, updateComplaintStatus, updateTLRequestStatus, getCityManagerRequests};

@@ -49,6 +49,10 @@ import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import CityDashboard from "./pages/CityManager/CityDashboard.jsx";
 import ComplaintsCM from "./pages/CityManager/Complaints.jsx";
 import Teams from "./pages/CityManager/Teams.jsx";
+import TeamLeadRequests from "./pages/TeamLeadRequests.jsx";
+import { faPaperPlane,faInbox } from "@fortawesome/free-solid-svg-icons";
+import CityManagerRequests from "./pages/CityManager/CityManagerRequests.jsx";
+
 function App() {
 
 
@@ -132,11 +136,13 @@ function App() {
         { to: "/teamLead/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
         { to: "/teamLead/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
         { to: "/teamLead/team", label: "Team", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/teamLead/requests", label: "Requests", icon: <FontAwesomeIcon icon={faPaperPlane} /> },
       ]} />}>
         <Route path="teamLead/dashboard" element={<TeamLeadHome />} />
         <Route path="teamLead/complaints" element={<TeamLeadsComplaints />} />
         <Route path="teamLead/team" element={<TeamLeadTeams />} />
         <Route path="teamLead/complaints/update/:id" element={<UpdateComplaint />} />
+        <Route path="teamLead/requests" element={<TeamLeadRequests />} />
       </Route>
       
     </Route>
@@ -172,11 +178,14 @@ function App() {
         { to: "/cityManager/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> },
         { to: "/cityManager/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
         { to: "/cityManager/teams", label: "Teams", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/cityManager/requests", label: "Requests", icon: <FontAwesomeIcon icon={faInbox} /> },
       ]} />}>
         <Route path="cityManager/dashboard" element={<CityDashboard />} />
         <Route path="cityManager/employees" element={<Employess />} />
         <Route path="cityManager/complaints" element={<ComplaintsCM />} />
         <Route path="cityManager/teams" element={<Teams />} />
+        <Route path="cityManager/requests" element={<CityManagerRequests />} />
+
 
       </Route>
       

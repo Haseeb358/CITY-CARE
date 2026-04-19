@@ -4,6 +4,8 @@ import complaintModel from "../model/complaint.model.js";
 import zoneModel from "../model/zone.model.js";
 import complaintHistoryModel from "../model/complaint-history.model.js";
 import { uploadMedia } from "../utils/mediaUpload.js";  
+import Request  from "../model/requests.model.js";
+
 let getTeamsForTeamLead = async (req, res,next) => {
    try {
   
@@ -381,6 +383,83 @@ const getComplaintTrend = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
- 
 
-export { getTeamsForTeamLead, getComplaintsForTeamLead, getComplaintWithHistory,updateComplaintStatus, getTeamPerformance, getComplaintTrend, getDashboardSummary };    
+
+let createRequest = async (req, res) => {
+  try {
+    const { title, message } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    const teamLead = await employeeModel.findById(req.user.employeeId);
+
+    if (!teamLead) {
+      return res.status(404).json({ message: "TeamLead not found" });
+    }
+
+    // Find city manager of same city
+    const cityManager = await employeeModel.findOne({
+      city: teamLead.city,
+      role: "cityManager"
+    });
+
+    if (!cityManager) {
+      return res.status(404).json({ message: "City Manager not found" });
+    }
+
+    const request = await Request.create({
+      title,
+      message,
+      fromTeamLead: teamLead._id,
+      toCityManager: cityManager._id,
+      city: teamLead.city
+    });
+
+    res.status(201).json(request);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+const getTeamLeadRequests = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, startDate, endDate } = req.query;
+
+    const filter = {
+      fromTeamLead: req.user.employeeId
+    };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate + "T23:59:59.999Z");
+    }
+
+    const requests = await Request.find(filter)
+      .populate("toCityManager", "fullName")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Request.countDocuments(filter);
+
+    res.json({
+      requests,
+      total,
+      page,
+      pages: Math.ceil(total / limit) 
+       
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export { getTeamsForTeamLead, getComplaintsForTeamLead, getComplaintWithHistory,updateComplaintStatus, getTeamPerformance, getComplaintTrend, getDashboardSummary, createRequest, getTeamLeadRequests };    

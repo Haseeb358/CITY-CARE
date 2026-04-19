@@ -1,7 +1,7 @@
 import express from "express";
 import { authorizeRoles } from "../middleware/verifyRole.js";
 import authenticateUser from "../middleware/verifyJWT.js";
-import { getTeamsForTeamLead,getComplaintsForTeamLead,getComplaintWithHistory,updateComplaintStatus,getTeamPerformance, getComplaintTrend, getDashboardSummary  } from "../controller/TeamLead.controler.js";
+import { getTeamsForTeamLead,getComplaintsForTeamLead,getComplaintWithHistory,updateComplaintStatus,getTeamPerformance, getComplaintTrend, getDashboardSummary ,createRequest, getTeamLeadRequests } from "../controller/TeamLead.controler.js";
 import upload from "../utils/multer.js";
 
 let router = express.Router();
@@ -26,5 +26,9 @@ router.get("/trend",
   authorizeRoles("teamLead"),
   getComplaintTrend
 );
+
+router.post("/requests", authenticateUser, authorizeRoles("teamLead"), createRequest);
+router.get("/requests", authenticateUser, authorizeRoles("teamLead"), getTeamLeadRequests);
+
 
 export default router;
