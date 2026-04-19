@@ -7,6 +7,7 @@ let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
 
 const AssignCredentialsModal = ({ employee, onClose, refresh }) => {
+  console.log("Employee in modal: ", employee);
 
   const {
     register,
@@ -64,12 +65,16 @@ const AssignCredentialsModal = ({ employee, onClose, refresh }) => {
           Employee: <b>{employee.fullName}</b>
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <form onSubmit={handleSubmit(onSubmit)}
+         className="space-y-3"
+         autoComplete="off"
+         >
 
           {/* EMAIL */}
           <div>
             <input
               type="email"
+              autoComplete="off"
               placeholder="Enter email"
               {...register("email", {
                 required: "Email is required" , pattern: {
@@ -90,6 +95,7 @@ const AssignCredentialsModal = ({ employee, onClose, refresh }) => {
           <div>
             <input
               type={showPass ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="Enter password"
               {...register("password", {
                 required: "Password is required",

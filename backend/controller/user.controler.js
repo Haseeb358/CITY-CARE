@@ -135,7 +135,8 @@ let loginUser = async (req, res,next) => {
         }
         // find name from complainant model using user._id
         let complainant = await complainantModel.findOne({ userID: user._id });
-        let employee = await employeeModel.findOne({ userID: user._id });
+        // need city name from city model using city id from complainant model
+        let employee = await employeeModel.findOne({ userID: user._id }).populate("city");
         let data = {
             _id: user._id,
             role: user.role,
@@ -143,6 +144,7 @@ let loginUser = async (req, res,next) => {
             email: user.email,
             fullName: complainant?.fullName || null,
             employeeId: employee?._id || null,
+            emCity: employee?.city ? employee.city.name : null,
         }
         sendToken_Cookie(data, 200, res, "Login Successful");  
     } catch (error) {
@@ -326,7 +328,7 @@ let checkLoginStatus = async (req, res,next) => {
         let token = req.cookies.token;
         // remove space from token if exist
        
-        console.log("Token from cookies:", token);
+        
         if(!token){
             return res.status(200).json({
                 success: false,

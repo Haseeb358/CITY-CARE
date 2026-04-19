@@ -40,6 +40,18 @@ import { faMapMarkedAlt } from "@fortawesome/free-solid-svg-icons";
 import Zones from "./pages/admin/Zones.jsx";
 import EmployeesWithAccouns from "./pages/admin/EmployeesWithAccouns.jsx";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
+import Cities from "./pages/admin/Cities.jsx";
+import { faCity } from "@fortawesome/free-solid-svg-icons";
+import Donations from "./pages/admin/Donations.jsx";
+import AllContactUs from "./pages/admin/ContactUs.jsx";
+import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faHeart } from "@fortawesome/free-solid-svg-icons";
+import CityDashboard from "./pages/CityManager/CityDashboard.jsx";
+import ComplaintsCM from "./pages/CityManager/Complaints.jsx";
+import Teams from "./pages/CityManager/Teams.jsx";
+import TeamLeadRequests from "./pages/TeamLeadRequests.jsx";
+import { faPaperPlane,faInbox } from "@fortawesome/free-solid-svg-icons";
+import CityManagerRequests from "./pages/CityManager/CityManagerRequests.jsx";
 
 function App() {
 
@@ -124,11 +136,13 @@ function App() {
         { to: "/teamLead/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
         { to: "/teamLead/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
         { to: "/teamLead/team", label: "Team", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/teamLead/requests", label: "Requests", icon: <FontAwesomeIcon icon={faPaperPlane} /> },
       ]} />}>
         <Route path="teamLead/dashboard" element={<TeamLeadHome />} />
         <Route path="teamLead/complaints" element={<TeamLeadsComplaints />} />
         <Route path="teamLead/team" element={<TeamLeadTeams />} />
         <Route path="teamLead/complaints/update/:id" element={<UpdateComplaint />} />
+        <Route path="teamLead/requests" element={<TeamLeadRequests />} />
       </Route>
       
     </Route>
@@ -140,16 +154,43 @@ function App() {
         { to: "/admin/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
         { to: "/admin/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> },
         { to: "/admin/zones", label: "Zones", icon: <FontAwesomeIcon icon={faMapMarkedAlt} /> },
-        { to: "/admin/employees-accounts", label: "Accounts", icon: <FontAwesomeIcon icon={faUser} /> }
+        { to: "/admin/employees-accounts", label: "Accounts", icon: <FontAwesomeIcon icon={faUser} /> },
+        { to: "/admin/cities", label: "Cities", icon: <FontAwesomeIcon icon={faCity} /> },
+        { to: "/admin/donations", label: "Donations", icon: <FontAwesomeIcon icon={faHeart} /> },
+        { to: "/admin/contact-us", label: "Contact Us", icon: <FontAwesomeIcon icon={faEnvelope} /> }
 
       ]} />}>
         <Route path="admin/dashboard" element={<AdminDashboard />} />
         <Route path="admin/employees" element={<Employess />} />
         <Route path="admin/zones" element={<Zones />} />
         <Route path="admin/employees-accounts" element={<EmployeesWithAccouns />} />
+        <Route path="admin/cities" element={<Cities />} />
+        <Route path="admin/donations" element={<Donations />} />
+        <Route path="admin/contact-us" element={<AllContactUs />} />
       </Route>
 
     </Route>
+    {/* City Manager Routes */}
+     <Route element={<ProtectedRoute allowedRoles={['cityManager']} />}>
+
+      <Route element={<DashboardLayout menuItems={[
+        { to: "/cityManager/dashboard", label: "Dashboard", icon: <FontAwesomeIcon icon={faHome} /> },
+        { to: "/cityManager/employees", label: "Employees", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/cityManager/complaints", label: "Complaints", icon: <FontAwesomeIcon icon={faClipboardList} /> },
+        { to: "/cityManager/teams", label: "Teams", icon: <FontAwesomeIcon icon={faUsers} /> },
+        { to: "/cityManager/requests", label: "Requests", icon: <FontAwesomeIcon icon={faInbox} /> },
+      ]} />}>
+        <Route path="cityManager/dashboard" element={<CityDashboard />} />
+        <Route path="cityManager/employees" element={<Employess />} />
+        <Route path="cityManager/complaints" element={<ComplaintsCM />} />
+        <Route path="cityManager/teams" element={<Teams />} />
+        <Route path="cityManager/requests" element={<CityManagerRequests />} />
+
+
+      </Route>
+      
+    </Route>
+
     <Route path="*" element={<NotFound />} />
   </Routes>
   

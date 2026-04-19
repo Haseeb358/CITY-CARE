@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-
+import useGetCities from "../../hooks/useGetCities";
 let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
 
@@ -12,18 +12,14 @@ const UploadZoneModal = ({ onClose, onSuccess }) => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+   
+  const fetchedCities = useGetCities();
   // 🔥 fetch cities
   useEffect(() => {
-    const fetchCities = async () => {
-      const { data } = await axios.get(
-        `${API_URL}${API_ADMIN_ROUTE}/cities`,
-        { withCredentials: true }
-      );
-      setCities(data.cities);
-    };
-    fetchCities();
-  }, []);
+    
+    setCities(fetchedCities);
+
+  }, [fetchedCities]);
 
   // 🔥 FILE VALIDATION (FRONTEND)
   const validateFile = async (file) => {

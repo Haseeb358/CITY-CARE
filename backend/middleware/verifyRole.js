@@ -7,7 +7,7 @@ let authorizeRoles =  (...allowedRoles) => {
     let {_id,role}=req.user;
     console.log("User role in authorizeRoles middleware: ", role);
     let employee = await employeeModel.findOne({ userID: _id });
-
+    req.user.employeeID = employee._id; // Attach employee record to req.user for later use
     // 🚫 Citizens blocked here
       if (role !== "employee") {
         return res.status(403).json({

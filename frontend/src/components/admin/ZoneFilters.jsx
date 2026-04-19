@@ -3,22 +3,16 @@ import axios from "axios";
 
 let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
-
+import useGetCities from "../../hooks/useGetCities";
 const ZoneFilters = ({ filters, setFilters, resetFilters, user }) => {
 
   const [cities, setCities] = useState([]);
-
-  const fetchCities = async () => {
-    const { data } = await axios.get(
-      `${API_URL}${API_ADMIN_ROUTE}/cities`,
-      { withCredentials: true }
-    );
-    setCities(data.cities);
-  };
+  let fetchedCities = useGetCities();
 
   useEffect(() => {
-    fetchCities();
-  }, []);
+    setCities(fetchedCities);
+  }, [fetchedCities]);
+  
 
   const handleChange = (e) => {
     setFilters(prev => ({
@@ -29,7 +23,7 @@ const ZoneFilters = ({ filters, setFilters, resetFilters, user }) => {
 
   return (
     <div className="grid md:grid-cols-4 gap-3">
-
+ 
       {/* SEARCH */}
       <input
         name="name"

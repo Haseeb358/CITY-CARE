@@ -5,12 +5,13 @@ import ZoneFilters from "../../components/admin/ZoneFilters";
 import ZoneTable from "../../components/admin/ZoneTable";
 import Pagination from "../../components/TeamLead/Pagination";
 import UploadZoneModal from "../../components/admin/UploadZoneModal";
-
+import Loader from "../../components/utilities/Loader";
 let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
 
 const Zones = () => {
   const { user } = useSelector((state) => state.user);
+  let [loading, setLoading] = useState(false);
 
   const defaultFilters = {
     name: "",
@@ -36,6 +37,8 @@ const Zones = () => {
   }, [filters.name]);
 
   const fetchZones = async () => {
+    setLoading(true);
+    
     try {
       const { data } = await axios.get(
         `${API_URL}${API_ADMIN_ROUTE}/allzones`,
@@ -50,11 +53,13 @@ const Zones = () => {
         }
       );
       console.log("Zones Data:", data);
+      setLoading(false);
       setZones(data.zones);
       setTotalPages(data.totalPages);
-
+      
     } catch (err) {
       console.error(err.response?.data || err.message);
+      setLoading(false);
     }
   };
 
@@ -70,6 +75,7 @@ const Zones = () => {
    if(zones.length === 0){
     return (
       <div className="p-4 max-w-7xl mx-auto">
+        <Loader isOpen={loading} />
         <ZoneFilters
           filters={filters}
           setFilters={setFilters}
@@ -83,7 +89,7 @@ const Zones = () => {
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-
+    <Loader isOpen={loading} />
       <ZoneFilters
         filters={filters}
         setFilters={setFilters}

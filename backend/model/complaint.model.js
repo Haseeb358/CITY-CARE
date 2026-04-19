@@ -39,7 +39,7 @@ let ComplaintSchema= new mongoose.Schema({
   
   CurrentStatus: {
     type: String,
-    enum: ["Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Review"],
+    enum: ["Pending", "In-Progress", "Resolved", "Rejected", "Assigned", "Reassigned"],
     default: "Pending"
   },
   

@@ -28,7 +28,11 @@ const Login = () => {
           navigate("/teamLead/dashboard");
         }else if(res?.data?.roleUser === "admin"){
           navigate("/admin/dashboard");
-        }else{
+        }
+        else if(res?.data?.roleUser === "cityManager"){
+          navigate("/cityManager/dashboard");
+        }
+        else{
           navigate("/");
         }
        toast.success(res?.message || "Login successful");

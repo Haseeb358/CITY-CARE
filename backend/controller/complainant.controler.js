@@ -25,7 +25,7 @@ let createComplaint = async (req, res, next) => {
       lng = parseFloat(lng);
       lat = parseFloat(lat);
 
-     const complainant = await complainantModel.findOne({
+    let complainant = await complainantModel.findOne({
       userID: req.user._id,
     });
    
@@ -58,7 +58,7 @@ let createComplaint = async (req, res, next) => {
         },
       },
     });
-
+   console.log("Auto-detected zone: ", theZone);
    let outOfServiceZone = false;
     if (!theZone) {//-----------TODO
       
@@ -88,7 +88,7 @@ let createComplaint = async (req, res, next) => {
 
     }
     //  Check for duplicate complaint
-    const duplicateComplaint = await ComplaintModel.findOne({
+    let duplicateComplaint = await ComplaintModel.findOne({
       category,
       city: cityRecord._id,
       CurrentStatus: { $in: ["Pending", "Assigned", "In-Progress"] },
@@ -132,7 +132,7 @@ let createComplaint = async (req, res, next) => {
       session=await mongoose.startSession();
       session.startTransaction();
         //  Create complaint
-      const complaint = await ComplaintModel.create([
+      let complaint = await ComplaintModel.create([
             {
                 complainant: complainant._id,
                 category,
@@ -165,7 +165,7 @@ let createComplaint = async (req, res, next) => {
         ],{ session });
  
         // Auto-assign team
-        const assignedTeam = await autoAssignTeam(complaint[0], session);
+        let assignedTeam = await autoAssignTeam(complaint[0], session);
         if (assignedTeam) {
           complaint[0].assignedTeam = assignedTeam._id;
           complaint[0].CurrentStatus = "Assigned";

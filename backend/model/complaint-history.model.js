@@ -22,13 +22,13 @@ const ComplaintHistorySchema = new mongoose.Schema({
 
   oldStatus: {
     type: String,
-    enum: ["Pending", "Assigned", "In-Progress", "Resolved", "Rejected"],
+    enum: ["Pending", "Assigned", "In-Progress", "Resolved", "Rejected","Reassigned"],
     default: null
   },
 
   newStatus: {
     type: String,
-    enum: ["Pending", "Assigned", "In-Progress", "Resolved", "Rejected","Review"],
+    enum: ["Pending", "Assigned", "In-Progress", "Resolved", "Rejected","Reassigned"],
     required: true
   },
 

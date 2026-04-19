@@ -11,8 +11,9 @@ let VITE_API_COMPLAINANT_ROUTE = import.meta.env.VITE_API_COMPLAINANT_ROUTE;
 import axios from "axios";
 import Loader from "../utilities/Loader";
 import { useEffect } from "react";
-
+import useGetCities from "../../hooks/useGetCities";
 export default function ComplaintForm() {
+  
   const initialFormData = {
     category: "",
     city: "",
@@ -30,6 +31,8 @@ export default function ComplaintForm() {
   const [loading, setLoading] = useState(false);
   const [loactionLoading, setLocationLoading] = useState(false);
   let [ctg, setCtg] = useState(null);
+  let [cities, setCities] = useState([]);
+  let fetchedCities = useGetCities();
 
 
   const userLocation = useGeolocation();
@@ -135,6 +138,7 @@ export default function ComplaintForm() {
   };
 
   useEffect(() => {
+    setCities(fetchedCities);
     // Fetch complaint categories from the API
     axios.get(`${VITE_API_URL}${VITE_API_COMPLAINANT_ROUTE}/complaint-categories`)
       .then((response) => {
@@ -143,7 +147,7 @@ export default function ComplaintForm() {
       .catch((error) => {
         console.error("Error fetching complaint categories:", error);
       });
-  }, []);
+  }, [fetchedCities]);
 
   if (submitted) {
     return <SuccessMessage resetForm={resetForm} msg={msgFromApi} status={status} />;
@@ -218,9 +222,11 @@ export default function ComplaintForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                   >
                     <option value="">Select a City</option>
-                    <option value="Lahore">Lahore</option>
-                    <option value="Karachi">Karachi</option>
-                    <option value="Muridke">Muridke</option>
+                    {cities && cities.map((city) => (
+                      <option key={city._id} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

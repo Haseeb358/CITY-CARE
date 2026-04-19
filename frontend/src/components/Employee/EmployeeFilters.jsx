@@ -1,4 +1,18 @@
+import axios from "axios";
+import React,{useEffect,useState} from "react";
+let API_URL = import.meta.env.VITE_API_URL;
+let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
+import useGetCities from "../../hooks/useGetCities";
+
 const EmployeeFilters = ({ filters, setFilters, resetFilters, user }) => {
+  const [DropDowncities, setDropDowncities] = useState([]);
+  let [cityManagerCity, setCityManagerCity] = useState(null);
+  const cities = useGetCities();
+  
+  useEffect(() => {
+    setDropDowncities(cities);
+    
+  }, [cities ]);
 
   const handleChange = (e) => {
     setFilters(prev => ({
@@ -62,28 +76,34 @@ const EmployeeFilters = ({ filters, setFilters, resetFilters, user }) => {
       {/* CITY */}
       {/* drop down menu*/}
       
-      <select
+      {user?.roleUser === "admin" && (
+        <select
         name="city"
         value={filters.city}
         onChange={handleChange}
         className="p-2 border rounded"
       >
         <option value="">All Cities</option>
-        <option value="Lahore">Lahore</option>
-        <option value="Karachi">Karachi</option>
-        
+        {DropDowncities.map((city) => (
+          <option key={city._id} value={city.name}>
+            {city.name}
+          </option>
+        ))}
       </select>
-
-      {/* {user?.roleUser === "admin" && (
-        <input
-          name="city"
-          placeholder="City"
-          value={filters.city}
-          onChange={handleChange}
-          className="p-2 border rounded"
-        />
-      )} */}
-
+      )}
+        {/* give dropdown */}
+      {(user?.roleUser === "cityManager" && user?.emCity) && (
+        <select
+        name="city"
+        value={filters.city}
+        onChange={handleChange}
+        className="p-2 border rounded"
+      >
+        
+        <option value={user.emCity}>{user.emCity}</option>
+      </select>
+      )}
+  
       {/* RESET */}
       <button
         onClick={resetFilters}

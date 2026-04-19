@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
-
+import useGetCities from "../../hooks/useGetCities";
 let API_URL = import.meta.env.VITE_API_URL;
 let API_ADMIN_ROUTE = import.meta.env.VITE_API_ADMIN_ROUTE;
 
@@ -9,24 +9,12 @@ const EmployeeAccountFilters = ({ filters, setFilters }) => {
 
   const { user } = useSelector((state) => state.user);
   const [cities, setCities] = useState([]);
+   let fetchedCities = useGetCities();
 
-  // 🔥 fetch cities
   useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const { data } = await axios.get(
-          `${API_URL}${API_ADMIN_ROUTE}/cities`,
-          { withCredentials: true }
-        );
-        setCities(data.cities);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchCities();
-  }, []);
-
+    setCities(fetchedCities);
+  }, [fetchedCities]);
+  
   const handleChange = (e) => {
     
     setFilters(prev => ({

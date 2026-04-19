@@ -4,12 +4,18 @@ import path from "path";
 
 import cloudinary from "./cloudinary.js";
 
-export const uploadMedia = async (files) => {
+export let uploadMedia = async (files) => {
+     let uploaded = [];
   try {
-    const uploaded = [];
+    
 
-  if (!files || files.length === 0) {
-    throw new Error("No files to upload");
+  if ( files.length === 0) {
+    // https://res.cloudinary.com/drydjzval/image/upload/v1776549801/ComplaintMedia/uofcremfv8ea5evgusv2.jpg
+    uploadMedia=[{
+      publicId: "ComplaintMedia/default-placeholder",
+      url: "https://res.cloudinary.com/drydjzval/image/upload/v1776549801/ComplaintMedia/uofcremfv8ea5evgusv2.jpg"
+    }]
+    return uploadMedia;
   }
 
   for (let file of files) {
@@ -28,7 +34,7 @@ export const uploadMedia = async (files) => {
 
     fs.unlinkSync(tempPath);
   }
-
+  console.log("Uploaded media: ", uploaded);
   return uploaded;
     
   } catch (error) {
