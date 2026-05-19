@@ -22,7 +22,7 @@ const Complaints = () => {
     team: "",
     unassigned: false,
     outOfService: "",
-    date: "month",
+    date: "", 
     status: "",
     _id: ""
   });

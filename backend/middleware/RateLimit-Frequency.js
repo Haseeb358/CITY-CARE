@@ -10,8 +10,8 @@ const strictLimiter = createRateLimiter({
 // 3 requests allowed in 12 hours
 const mediumLimiter = createRateLimiter({
   windowMs: 5 * 60 * 1000,
-  max: 3,
-  message: "Max 3 requests allowed per 5 minutes",
+  max: 5,
+  message: "Max 5 requests allowed per 5 minutes",
 });
 
 // 20 requests allowed in 60 minutes

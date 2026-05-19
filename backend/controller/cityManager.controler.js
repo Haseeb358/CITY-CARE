@@ -270,7 +270,9 @@ const getTeamsByZone = async (req, res, next) => {
 
 const assignTeam = async (req, res, next) => {
   try {
+    console.log("jhhh")
     const { teamId } = req.body;
+    console.log("Assigning team. Complaint ID: ", req.params.id, " Team ID: ", teamId);
 
     const complaint = await Complaint.findById(req.params.id);
 

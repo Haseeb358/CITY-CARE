@@ -32,7 +32,7 @@ const ComplaintFilters = ({
           <option value="In-Progress">In-Progress</option>
           <option value="Resolved">Resolved</option>
           <option value="Rejected">Rejected</option>
-          <option value="Review">Review</option>
+          <option value="Reassigned">Reassigned</option>
         </select>
 
         {/* DATE */}
