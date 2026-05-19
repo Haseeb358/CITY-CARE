@@ -86,7 +86,8 @@ let getCMComplaints = async (req, res) => {
       page = 1,
       limit = 10,
       city,
-      status
+      status,
+      _id
     } = req.query;
 
     console.log("getCMComplaints zone: ", zone);
@@ -149,6 +150,9 @@ let getCMComplaints = async (req, res) => {
     }
     if(status){
       query.CurrentStatus = status;
+    }
+    if(_id){
+      query._id = _id;
     }
 
     // ✅ PAGINATION

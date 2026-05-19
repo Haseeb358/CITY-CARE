@@ -3,7 +3,7 @@ const ComplaintFilters = ({
   setFilters,
   setPage,
   teams,
-  onReset
+  onReset,
 }) => {
 
   const handleChange = (e) => {
@@ -18,7 +18,7 @@ const ComplaintFilters = ({
     <div className="space-y-3">
 
       {/* FILTERS GRID */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-4 gap-4">
 
         {/* STATUS */}
         <select
@@ -63,7 +63,17 @@ const ComplaintFilters = ({
             </option>
           ))}
         </select>
- 
+        
+        {/* _id SEARCH */}
+        <input
+          type="text"
+          name="_id"
+          placeholder="Search by _id..."
+          value={filters._id}
+          onChange={handleChange}
+          className="p-2 border rounded"
+        />
+
         {/* CATEGORY SEARCH */}
         <input
           type="text"
